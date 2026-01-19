@@ -3,76 +3,157 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#667eea">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Lançamentos">
+  <link rel="manifest" href="manifest.json">
   <title>Lançamentos Financeiros</title>
   
+  <!-- jsPDF Library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  
   <style>
+    :root {
+      --primary-color: #667eea;
+      --primary-dark: #5568d3;
+      --secondary-color: #764ba2;
+      --success-color: #4caf50;
+      --error-color: #f44336;
+      --text-color: #333;
+      --text-secondary: #666;
+      --border-color: #e0e0e0;
+      --background: #f5f5f5;
+    }
+    
     * {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
     
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      padding: 20px;
+      background: #fff;
       display: flex;
-      justify-content: center;
-      align-items: center;
+      flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+    
+    .app-header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      color: white;
+      padding: 16px 20px;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    }
+    
+    .app-header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      text-align: center;
+      margin: 0;
+    }
+    
+    .sync-badge {
+      position: absolute;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      background: rgba(255, 255, 255, 0.3);
+      color: white;
+      border-radius: 12px;
+      padding: 4px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      display: none;
+    }
+    
+    .sync-badge.show {
+      display: block;
     }
     
     .container {
+      flex: 1;
+      margin-top: 52px;
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      background: var(--background);
+    }
+    
+    .content-wrapper {
       background: white;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-      padding: 30px;
-      max-width: 500px;
-      width: 100%;
+      padding: 20px;
+      max-width: 600px;
+      margin: 0 auto;
     }
     
     h1 {
-      color: #333;
+      color: var(--text-color);
       font-size: 24px;
       margin-bottom: 10px;
       text-align: center;
     }
     
     .subtitle {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
       text-align: center;
       margin-bottom: 20px;
+      display: none; /* Hide subtitle in fullscreen mode */
     }
     
     .tabs {
+      position: sticky;
+      top: 0;
+      background: white;
       display: flex;
-      gap: 10px;
-      margin-bottom: 20px;
-      border-bottom: 2px solid #e0e0e0;
+      gap: 0;
+      z-index: 10;
+      border-bottom: 1px solid var(--border-color);
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
     }
     
     .tab {
       flex: 1;
-      padding: 12px;
+      padding: 16px 12px;
       background: transparent;
       border: none;
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
-      color: #666;
+      color: var(--text-secondary);
       border-bottom: 3px solid transparent;
       transition: all 0.3s;
+      position: relative;
     }
     
     .tab.active {
-      color: #667eea;
-      border-bottom-color: #667eea;
+      color: var(--primary-color);
+      border-bottom-color: var(--primary-color);
+      background: rgba(102, 126, 234, 0.05);
     }
     
     .tab-content {
       display: none;
+      padding: 20px;
+      animation: fadeIn 0.3s ease-in;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
     
     .tab-content.active {
@@ -85,7 +166,7 @@
     
     label {
       display: block;
-      color: #333;
+      color: var(--text-color);
       font-weight: 600;
       margin-bottom: 8px;
       font-size: 14px;
@@ -97,18 +178,19 @@
     textarea {
       width: 100%;
       padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
       font-size: 16px;
       transition: all 0.3s;
       font-family: inherit;
+      background: white;
     }
     
     input:focus,
     select:focus,
     textarea:focus {
       outline: none;
-      border-color: #667eea;
+      border-color: var(--primary-color);
       box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     
@@ -119,7 +201,7 @@
     
     .radio-group {
       display: flex;
-      gap: 15px;
+      gap: 12px;
       margin-top: 8px;
     }
     
@@ -136,46 +218,78 @@
     .radio-option label {
       display: block;
       padding: 12px;
-      border: 2px solid #e0e0e0;
-      border-radius: 10px;
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
       text-align: center;
       cursor: pointer;
       transition: all 0.3s;
       margin: 0;
+      background: white;
     }
     
     .radio-option input[type="radio"]:checked + label {
-      background: #667eea;
+      background: var(--primary-color);
       color: white;
-      border-color: #667eea;
+      border-color: var(--primary-color);
+      transform: scale(1.02);
     }
     
     .photo-section {
-      border: 2px dashed #e0e0e0;
-      border-radius: 10px;
+      border: 2px dashed var(--border-color);
+      border-radius: 8px;
       padding: 20px;
       text-align: center;
-      cursor: pointer;
       transition: all 0.3s;
-      background: #f9f9f9;
+      background: #fafafa;
     }
     
     .photo-section:hover {
-      border-color: #667eea;
+      border-color: var(--primary-color);
       background: #f5f7ff;
     }
     
     .photo-section.has-photo {
       border-style: solid;
-      border-color: #667eea;
+      border-color: var(--primary-color);
+      padding: 15px;
+      background: white;
+    }
+    
+    .photo-controls {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+    
+    .btn-camera,
+    .btn-gallery {
+      flex: 1;
       padding: 10px;
+      border: 2px solid var(--primary-color);
+      background: white;
+      color: var(--primary-color);
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+    }
+    
+    .btn-camera:hover,
+    .btn-gallery:hover {
+      background: var(--primary-color);
+      color: white;
+    }
+    
+    .btn-camera:active,
+    .btn-gallery:active {
+      transform: scale(0.98);
     }
     
     #photoPreviewContainer {
       display: flex;
       flex-wrap: wrap;
       gap: 10px;
-      margin-top: 10px;
     }
     
     .photo-preview-item {
@@ -189,6 +303,7 @@
       height: 100%;
       object-fit: cover;
       border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     }
     
     .pdf-preview {
@@ -198,7 +313,7 @@
       align-items: center;
       justify-content: center;
       background: #f0f0f0;
-      border: 2px solid #667eea;
+      border: 2px solid var(--primary-color);
       border-radius: 8px;
       font-size: 32px;
       text-align: center;
@@ -211,7 +326,7 @@
       position: absolute;
       top: -8px;
       right: -8px;
-      background: #f44336;
+      background: var(--error-color);
       color: white;
       border: none;
       border-radius: 50%;
@@ -223,20 +338,28 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      transition: transform 0.2s;
+    }
+    
+    .photo-preview-item .remove-photo:hover {
+      transform: scale(1.1);
     }
     
     .photo-icon {
       font-size: 48px;
-      color: #667eea;
+      color: var(--primary-color);
       margin-bottom: 10px;
     }
     
     .photo-text {
-      color: #666;
+      color: var(--text-secondary);
       font-size: 14px;
     }
     
-    #photoInput {
+    #photoInput,
+    #cameraInput,
+    #galleryInput {
       display: none;
     }
     
@@ -244,22 +367,29 @@
       width: 100%;
       padding: 15px;
       border: none;
-      border-radius: 10px;
+      border-radius: 8px;
       font-size: 16px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
       margin-top: 10px;
+      position: relative;
+      overflow: hidden;
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
       color: white;
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
     }
     
     .btn-primary:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .btn-primary:active:not(:disabled) {
+      transform: translateY(0);
     }
     
     .btn-primary:disabled {
@@ -268,13 +398,90 @@
     }
     
     .btn-secondary {
-      background: #f0f0f0;
-      color: #333;
+      background: white;
+      color: var(--text-color);
+      border: 2px solid var(--border-color);
+    }
+    
+    .btn-secondary:hover {
+      background: var(--background);
+    }
+    
+    .progress-bar {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.5);
+      width: 0%;
+      transition: width 0.3s ease;
+    }
+    
+    /* Toast Notifications */
+    .toast {
+      position: fixed;
+      bottom: -100px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      color: var(--text-color);
+      padding: 16px 24px;
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      z-index: 1000;
+      min-width: 280px;
+      max-width: 90%;
+      transition: bottom 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    }
+    
+    .toast.show {
+      bottom: 30px;
+    }
+    
+    .toast.toast-success {
+      background: var(--success-color);
+      color: white;
+    }
+    
+    .toast.toast-error {
+      background: var(--error-color);
+      color: white;
+    }
+    
+    .toast-icon {
+      font-size: 24px;
+      width: 32px;
+      height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .toast-message {
+      flex: 1;
+      font-size: 14px;
+      line-height: 1.4;
+    }
+    
+    @keyframes checkmark {
+      0% { transform: scale(0) rotate(45deg); }
+      50% { transform: scale(1.2) rotate(45deg); }
+      100% { transform: scale(1) rotate(45deg); }
+    }
+    
+    .toast-icon.animate {
+      animation: checkmark 0.5s ease;
     }
     
     .message {
       padding: 15px;
-      border-radius: 10px;
+      border-radius: 8px;
       margin-bottom: 20px;
       display: none;
       font-size: 14px;
@@ -308,7 +515,7 @@
     
     .spinner {
       border: 3px solid #f3f3f3;
-      border-top: 3px solid #667eea;
+      border-top: 3px solid var(--primary-color);
       border-radius: 50%;
       width: 40px;
       height: 40px;
@@ -322,22 +529,30 @@
     }
     
     .history-list {
-      max-height: 500px;
+      max-height: calc(100vh - 200px);
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
     
     .history-item {
       padding: 15px;
-      border-bottom: 1px solid #e0e0e0;
+      border-bottom: 1px solid var(--border-color);
       transition: background 0.2s;
+      background: white;
+      margin-bottom: 1px;
     }
     
     .history-item:hover {
-      background: #f5f5f5;
+      background: var(--background);
+    }
+    
+    .history-item.pending {
+      background: #fff3cd;
+      border-left: 4px solid #ffc107;
     }
     
     .history-item a {
-      color: #667eea;
+      color: var(--primary-color);
       text-decoration: none;
       font-weight: 600;
       word-break: break-word;
@@ -353,6 +568,21 @@
       margin-top: 5px;
     }
     
+    .history-sync-status {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      margin-left: 8px;
+      background: #ffc107;
+      color: #856404;
+    }
+    
+    .history-sync-status.synced {
+      background: var(--success-color);
+      color: white;
+    }
+    
     .no-history {
       text-align: center;
       padding: 40px;
@@ -360,30 +590,32 @@
     }
     
     @media (max-width: 480px) {
-      .container {
-        padding: 20px;
+      .content-wrapper {
+        padding: 15px;
       }
       
-      h1 {
-        font-size: 20px;
+      .tab-content {
+        padding: 15px;
       }
       
-      body {
-        padding: 10px;
+      .app-header h1 {
+        font-size: 18px;
       }
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="app-header">
     <h1>💰 Lançamentos Financeiros</h1>
-    <p class="subtitle">Registre suas movimentações</p>
-    
-    <div class="tabs">
-      <button class="tab active" onclick="switchTab('form')">Novo Lançamento</button>
-      <button class="tab" onclick="switchTab('history')">Histórico</button>
-    </div>
-    
+    <div class="sync-badge" id="syncBadge">0</div>
+  </div>
+  
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('form')">Novo Lançamento</button>
+    <button class="tab" onclick="switchTab('history')">Histórico</button>
+  </div>
+  
+  <div class="container">
     <div id="message" class="message"></div>
     
     <!-- Form Tab -->
@@ -451,19 +683,25 @@
         </div>
         
         <div class="form-group">
-          <label>Arquivos (Fotos ou PDFs)</label>
-          <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
-            <input type="file" id="photoInput" accept="image/*,application/pdf" multiple>
+          <label>Fotos (Serão convertidas em PDF)</label>
+          <div class="photo-section" id="photoSection">
+            <div class="photo-controls">
+              <button type="button" class="btn-camera" onclick="openCamera()">📷 Tirar Foto</button>
+              <button type="button" class="btn-gallery" onclick="openGallery()">🖼️ Galeria</button>
+            </div>
+            <input type="file" id="cameraInput" accept="image/*" capture="environment">
+            <input type="file" id="galleryInput" accept="image/*,application/pdf" multiple>
             <div id="photoPlaceholder">
               <div class="photo-icon">📎</div>
-              <div class="photo-text">Toque para adicionar arquivos (fotos ou PDFs)</div>
+              <div class="photo-text">Use os botões acima para adicionar fotos</div>
             </div>
             <div id="photoPreviewContainer"></div>
           </div>
         </div>
         
         <button type="submit" class="btn btn-primary" id="submitBtn">
-          Salvar Lançamento
+          <span>Salvar Lançamento</span>
+          <div class="progress-bar" id="progressBar"></div>
         </button>
         
         <button type="button" class="btn btn-secondary" onclick="resetForm()">
@@ -488,8 +726,94 @@
   </div>
   
   <script>
+    // jsPDF initialization
+    const { jsPDF } = window.jspdf;
+    
+    // LocalStorage keys
+    const STORAGE_KEY = 'financial_transactions';
+    const SYNC_KEY = 'pending_sync';
+    
     // Set today's date as default
     document.getElementById('date').valueAsDate = new Date();
+    
+    // Initialize app
+    initializeApp();
+    
+    function initializeApp() {
+      updateSyncBadge();
+      loadLocalHistory();
+    }
+    
+    // LocalStorage functions
+    function saveToLocalStorage(transaction) {
+      const transactions = getLocalTransactions();
+      transaction.id = Date.now();
+      transaction.synced = false;
+      transaction.timestamp = new Date().toISOString();
+      transactions.push(transaction);
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      updateSyncBadge();
+    }
+    
+    function getLocalTransactions() {
+      const data = localStorage.getItem(STORAGE_KEY);
+      return data ? JSON.parse(data) : [];
+    }
+    
+    function markAsSynced(transactionId) {
+      const transactions = getLocalTransactions();
+      const transaction = transactions.find(t => t.id === transactionId);
+      if (transaction) {
+        transaction.synced = true;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+        updateSyncBadge();
+      }
+    }
+    
+    function getUnsyncedCount() {
+      const transactions = getLocalTransactions();
+      return transactions.filter(t => !t.synced).length;
+    }
+    
+    function updateSyncBadge() {
+      const count = getUnsyncedCount();
+      const badge = document.getElementById('syncBadge');
+      if (count > 0) {
+        badge.textContent = count;
+        badge.classList.add('show');
+      } else {
+        badge.classList.remove('show');
+      }
+    }
+    
+    function loadLocalHistory() {
+      // This will merge with server history when history tab is opened
+      const transactions = getLocalTransactions();
+      console.log(`Loaded ${transactions.length} local transactions`);
+    }
+    
+    // Toast notification function
+    function showToast(message, type = 'success') {
+      const toast = document.createElement('div');
+      toast.className = `toast toast-${type}`;
+      toast.innerHTML = `
+        <span class="toast-icon ${type === 'success' ? 'animate' : ''}">${type === 'success' ? '✓' : '✗'}</span>
+        <span class="toast-message">${message}</span>
+      `;
+      document.body.appendChild(toast);
+      
+      setTimeout(() => toast.classList.add('show'), 100);
+      
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3000);
+      
+      // Vibrate on success
+      if (type === 'success' && navigator.vibrate) {
+        navigator.vibrate(200);
+      }
+    }
     
     // Tab switching
     function switchTab(tabName) {
@@ -519,33 +843,75 @@
       }
     }
     
-    // Load history
+    // Load history (merge local and server)
     function loadHistory() {
       document.getElementById('historyLoading').classList.add('show');
       document.getElementById('historyList').innerHTML = '';
       
+      // Get local transactions
+      const localTransactions = getLocalTransactions();
+      
+      // Get server transactions
       google.script.run
-        .withSuccessHandler(displayHistory)
-        .withFailureHandler(historyError)
+        .withSuccessHandler(function(result) {
+          displayHistory(result, localTransactions);
+        })
+        .withFailureHandler(function(error) {
+          // Show only local history on error
+          displayHistory({ success: true, files: [] }, localTransactions);
+        })
         .getFileHistory();
     }
     
-    function displayHistory(result) {
+    function displayHistory(serverResult, localTransactions = []) {
       document.getElementById('historyLoading').classList.remove('show');
+      const historyList = document.getElementById('historyList');
       
-      if (result.success && result.files.length > 0) {
-        const historyList = document.getElementById('historyList');
-        historyList.innerHTML = result.files.map(file => {
+      // Combine server and local transactions
+      const allItems = [];
+      
+      // Add server transactions
+      if (serverResult.success && serverResult.files.length > 0) {
+        serverResult.files.forEach(file => {
+          allItems.push({
+            ...file,
+            source: 'server',
+            synced: true
+          });
+        });
+      }
+      
+      // Add local unsynced transactions
+      localTransactions.filter(t => !t.synced).forEach(trans => {
+        allItems.push({
+          name: 'Aguardando sincronização...',
+          date: trans.date,
+          type: trans.type,
+          value: trans.value,
+          url: '#',
+          source: 'local',
+          synced: false
+        });
+      });
+      
+      if (allItems.length > 0) {
+        historyList.innerHTML = allItems.map(item => {
+          const syncStatus = item.synced 
+            ? '<span class="history-sync-status synced">✓ Sincronizado</span>' 
+            : '<span class="history-sync-status">⏳ Pendente</span>';
+          
+          const itemClass = item.synced ? 'history-item' : 'history-item pending';
+          
           return `
-            <div class="history-item">
-              <a href="${file.url}" target="_blank">${file.name}</a>
-              <div class="history-date">${file.date} - ${file.type} - ${file.value}</div>
+            <div class="${itemClass}">
+              <a href="${item.url}" target="_blank">${item.name}</a>
+              ${syncStatus}
+              <div class="history-date">${item.date} - ${item.type} - ${item.value}</div>
             </div>
           `;
         }).join('');
       } else {
-        document.getElementById('historyList').innerHTML = 
-          '<div class="no-history">Nenhum arquivo encontrado</div>';
+        historyList.innerHTML = '<div class="no-history">Nenhum arquivo encontrado</div>';
       }
     }
     
@@ -578,154 +944,278 @@
       e.target.value = value;
     });
     
-    // Handle multiple file selection (images and PDFs)
+    // Camera and gallery functions
     let photosData = [];
-    let fileTypes = []; // Track file types
     let loadedPhotos = 0;
     let totalPhotos = 0;
     
-    document.getElementById('photoInput').addEventListener('change', function(e) {
-      const files = e.target.files;
-      if (files.length > 0) {
-        // Clear previous files
-        photosData = [];
-        fileTypes = [];
-        loadedPhotos = 0;
-        totalPhotos = files.length;
-        const container = document.getElementById('photoPreviewContainer');
-        container.innerHTML = '';
-        document.getElementById('photoPlaceholder').style.display = 'none';
-        document.getElementById('photoSection').classList.add('has-photo');
-        
-        // Process each file
-        Array.from(files).forEach((file, index) => {
-          const reader = new FileReader();
-          reader.onload = function(event) {
-            photosData[index] = event.target.result;
-            fileTypes[index] = file.type;
-            loadedPhotos++;
-            
-            // Create preview element
-            const previewItem = document.createElement('div');
-            previewItem.className = 'photo-preview-item';
-            
-            // Different preview for PDFs vs images
-            if (file.type === 'application/pdf') {
-              previewItem.innerHTML = `
-                <div class="pdf-preview">📄 ${file.name}</div>
-                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
-              `;
-            } else {
-              previewItem.innerHTML = `
-                <img src="${event.target.result}" alt="Preview ${index + 1}">
-                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
-              `;
-            }
-            container.appendChild(previewItem);
-            
-            // Update submit button text
-            updateSubmitButton();
-          };
-          reader.readAsDataURL(file);
-        });
+    function openCamera() {
+      const input = document.getElementById('cameraInput');
+      input.click();
+    }
+    
+    function openGallery() {
+      const input = document.getElementById('galleryInput');
+      input.click();
+    }
+    
+    // Handle camera capture (single photo, can be called multiple times)
+    document.getElementById('cameraInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        processNewPhoto(file, true); // true = ask to add more
+        e.target.value = ''; // Reset so we can capture again
       }
     });
     
+    // Handle gallery selection (multiple photos)
+    document.getElementById('galleryInput').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => processNewPhoto(file, false)); // false = don't ask
+      e.target.value = '';
+    });
+    
+    function processNewPhoto(file, askForMore) {
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const index = photosData.length;
+        photosData.push({
+          data: event.target.result,
+          type: file.type,
+          name: file.name
+        });
+        
+        addPhotoPreview(event.target.result, file.type, file.name, index);
+        updatePhotoSection();
+        
+        // Ask if user wants to add more photos (only for camera)
+        if (askForMore) {
+          setTimeout(() => {
+            if (confirm('Foto adicionada! Deseja tirar mais uma foto?')) {
+              openCamera();
+            }
+          }, 300);
+        }
+      };
+      reader.readAsDataURL(file);
+    }
+    
+    function addPhotoPreview(dataUrl, fileType, fileName, index) {
+      const container = document.getElementById('photoPreviewContainer');
+      const previewItem = document.createElement('div');
+      previewItem.className = 'photo-preview-item';
+      previewItem.dataset.index = index;
+      
+      if (fileType === 'application/pdf') {
+        previewItem.innerHTML = `
+          <div class="pdf-preview">📄 ${fileName}</div>
+          <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+        `;
+      } else {
+        previewItem.innerHTML = `
+          <img src="${dataUrl}" alt="Preview ${index + 1}">
+          <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+        `;
+      }
+      container.appendChild(previewItem);
+    }
+    
+    function updatePhotoSection() {
+      const placeholder = document.getElementById('photoPlaceholder');
+      const section = document.getElementById('photoSection');
+      
+      if (photosData.length > 0) {
+        placeholder.style.display = 'none';
+        section.classList.add('has-photo');
+      } else {
+        placeholder.style.display = 'block';
+        section.classList.remove('has-photo');
+      }
+      
+      updateSubmitButton();
+    }
+    
     function updateSubmitButton() {
       const btn = document.getElementById('submitBtn');
-      if (loadedPhotos < totalPhotos && totalPhotos > 0) {
-        btn.textContent = `Carregando arquivos (${loadedPhotos}/${totalPhotos})...`;
-        btn.disabled = true;
+      const btnText = btn.querySelector('span');
+      if (photosData.length > 0) {
+        btnText.textContent = `Salvar Lançamento (${photosData.length} foto${photosData.length > 1 ? 's' : ''})`;
       } else {
-        btn.textContent = 'Salvar Lançamento';
-        btn.disabled = false;
+        btnText.textContent = 'Salvar Lançamento';
       }
     }
     
-    // Remove a specific file
+    // Remove a specific photo
     function removePhoto(index) {
       photosData.splice(index, 1);
-      fileTypes.splice(index, 1);
       
-      // Rebuild all preview elements with correct indices
+      // Rebuild preview
       const container = document.getElementById('photoPreviewContainer');
       container.innerHTML = '';
       
-      photosData.forEach((photoData, idx) => {
-        const previewItem = document.createElement('div');
-        previewItem.className = 'photo-preview-item';
-        
-        if (fileTypes[idx] === 'application/pdf') {
-          previewItem.innerHTML = `
-            <div class="pdf-preview">📄 PDF</div>
-            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
-          `;
-        } else {
-          previewItem.innerHTML = `
-            <img src="${photoData}" alt="Preview ${idx + 1}">
-            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
-          `;
-        }
-        container.appendChild(previewItem);
+      photosData.forEach((photo, idx) => {
+        addPhotoPreview(photo.data, photo.type, photo.name, idx);
       });
       
+      updatePhotoSection();
+    }
+    
+    // Convert images to PDF
+    async function convertImagesToPDF() {
       if (photosData.length === 0) {
-        document.getElementById('photoPlaceholder').style.display = 'block';
-        document.getElementById('photoSection').classList.remove('has-photo');
+        throw new Error('Nenhuma foto para converter');
       }
+      
+      // Filter only images (exclude PDFs if any)
+      const images = photosData.filter(p => p.type.startsWith('image/'));
+      
+      if (images.length === 0) {
+        throw new Error('Nenhuma imagem para converter em PDF');
+      }
+      
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+      
+      for (let i = 0; i < images.length; i++) {
+        if (i > 0) {
+          pdf.addPage();
+        }
+        
+        try {
+          // Get image dimensions
+          const img = await loadImage(images[i].data);
+          const pageWidth = pdf.internal.pageSize.getWidth();
+          const pageHeight = pdf.internal.pageSize.getHeight();
+          
+          // Calculate scaling to fit page with margins
+          const margin = 10;
+          const maxWidth = pageWidth - (2 * margin);
+          const maxHeight = pageHeight - (2 * margin);
+          
+          let width = img.width;
+          let height = img.height;
+          
+          // Scale down if needed
+          const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
+          width = width * ratio;
+          height = height * ratio;
+          
+          // Center on page
+          const x = (pageWidth - width) / 2;
+          const y = (pageHeight - height) / 2;
+          
+          // Add image to PDF
+          pdf.addImage(images[i].data, 'JPEG', x, y, width, height, undefined, 'FAST');
+        } catch (err) {
+          console.error('Error adding image to PDF:', err);
+        }
+      }
+      
+      // Return as base64 data URL
+      return pdf.output('dataurlstring');
+    }
+    
+    function loadImage(dataUrl) {
+      return new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = dataUrl;
+      });
     }
     
     // Handle form submission
-    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+    document.getElementById('transactionForm').addEventListener('submit', async function(e) {
       e.preventDefault();
       
-      // Filter out any null/undefined files and validate
-      const validFiles = photosData.filter(p => p != null && p !== '');
-      if (validFiles.length === 0) {
-        showMessage('Por favor, adicione pelo menos um arquivo.', 'error');
+      if (photosData.length === 0) {
+        showToast('Por favor, adicione pelo menos uma foto.', 'error');
         return;
       }
-      
-      // Get form data
-      const formData = {
-        date: document.getElementById('date').value,
-        partner: document.getElementById('partner').value,
-        description: document.getElementById('description').value,
-        type: document.querySelector('input[name="type"]:checked').value,
-        status: document.getElementById('status').value,
-        account: document.getElementById('account').value,
-        user: document.getElementById('user').value,
-        value: document.getElementById('value').value,
-        images: validFiles
-      };
       
       // Show loading
       document.getElementById('transactionForm').style.display = 'none';
       document.getElementById('loading').classList.add('show');
       
-      // Submit to server
-      google.script.run
-        .withSuccessHandler(onSuccess)
-        .withFailureHandler(onFailure)
-        .processForm(formData);
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = '0%';
+      
+      try {
+        // Animate progress bar
+        progressBar.style.width = '30%';
+        
+        // Convert images to PDF
+        const pdfData = await convertImagesToPDF();
+        
+        progressBar.style.width = '60%';
+        
+        // Get form data
+        const formData = {
+          date: document.getElementById('date').value,
+          partner: document.getElementById('partner').value,
+          description: document.getElementById('description').value,
+          type: document.querySelector('input[name="type"]:checked').value,
+          status: document.getElementById('status').value,
+          account: document.getElementById('account').value,
+          user: document.getElementById('user').value,
+          value: document.getElementById('value').value,
+          pdfData: pdfData // Single PDF instead of multiple images
+        };
+        
+        // Save to local storage first
+        saveToLocalStorage(formData);
+        
+        progressBar.style.width = '80%';
+        
+        // Submit to server
+        google.script.run
+          .withSuccessHandler(function(result) {
+            onSuccess(result, formData.id);
+          })
+          .withFailureHandler(onFailure)
+          .processForm(formData);
+        
+        progressBar.style.width = '100%';
+        
+      } catch (error) {
+        document.getElementById('loading').classList.remove('show');
+        document.getElementById('transactionForm').style.display = 'block';
+        showToast('Erro ao processar imagens: ' + error.message, 'error');
+        progressBar.style.width = '0%';
+      }
     });
     
-    function onSuccess(result) {
+    function onSuccess(result, transactionId) {
       document.getElementById('loading').classList.remove('show');
       document.getElementById('transactionForm').style.display = 'block';
       
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = '0%';
+      
       if (result.success) {
-        showMessage(result.message + ' Arquivo: ' + result.filename, 'success');
+        // Mark as synced in local storage
+        if (transactionId) {
+          markAsSynced(transactionId);
+        }
+        
+        showToast(`✓ Lançamento salvo com sucesso! ${photosData.length} foto(s) convertida(s) em PDF.`, 'success');
         resetForm();
       } else {
-        showMessage(result.message, 'error');
+        showToast(result.message, 'error');
       }
     }
     
     function onFailure(error) {
       document.getElementById('loading').classList.remove('show');
       document.getElementById('transactionForm').style.display = 'block';
-      showMessage('Erro ao processar: ' + error.message, 'error');
+      
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = '0%';
+      
+      showToast('Erro ao processar: ' + error.message, 'error');
     }
     
     function showMessage(text, type) {
@@ -745,13 +1235,12 @@
       document.getElementById('transactionForm').reset();
       document.getElementById('date').valueAsDate = new Date();
       photosData = [];
-      loadedPhotos = 0;
-      totalPhotos = 0;
       document.getElementById('photoPreviewContainer').innerHTML = '';
-      document.getElementById('photoPlaceholder').style.display = 'block';
-      document.getElementById('photoSection').classList.remove('has-photo');
+      updatePhotoSection();
       document.getElementById('message').classList.remove('show');
-      updateSubmitButton();
+      
+      const progressBar = document.getElementById('progressBar');
+      progressBar.style.width = '0%';
     }
   </script>
 </body>
