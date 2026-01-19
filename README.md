@@ -1,2 +1,151 @@
-# LAN-AMENTOS-FINANCEIROS
-App para lançamento de movimentações financeiras em caixa fisico
+# 💰 Lançamentos Financeiros - Web App
+
+App mobile para lançamento de movimentações financeiras com captura de fotos e armazenamento automatizado no Google Drive.
+
+## 📋 Funcionalidades
+
+- **Interface Mobile Responsiva**: Design otimizado para dispositivos móveis
+- **Campos do Formulário**:
+  - Data da movimentação
+  - Parceiro (fornecedor/cliente)
+  - Descrição detalhada
+  - Tipo: Receita ou Gasto
+  - Usuário (iniciais, ex: MR)
+  - Foto (câmera ou galeria)
+- **Nomenclatura Automática**: Arquivos salvos com padrão `AAMMDD[seq][Iniciais] - Parceiro - Desc.jpg`
+- **Sequenciamento Inteligente**: Gera letras sequenciais (a, b, c...) para múltiplos lançamentos na mesma data
+- **Armazenamento no Drive**: Salvamento automático em pasta configurável
+
+## 🚀 Como Implantar
+
+### 1. Criar um novo projeto no Google Apps Script
+
+1. Acesse [script.google.com](https://script.google.com)
+2. Clique em "Novo projeto"
+3. Nomeie o projeto como "Lançamentos Financeiros"
+
+### 2. Adicionar os arquivos
+
+1. **Renomeie o arquivo Code.gs padrão**:
+   - Cole o conteúdo do arquivo `Code.gs` deste repositório
+
+2. **Adicione o arquivo HTML**:
+   - Clique em `+` ao lado de "Arquivos"
+   - Selecione "HTML"
+   - Nomeie como "Index"
+   - Cole o conteúdo do arquivo `Index.html` deste repositório
+
+### 3. Configurar a pasta do Google Drive
+
+1. Crie uma pasta no Google Drive onde os arquivos serão salvos
+2. Abra a pasta e copie o ID da URL:
+   - URL exemplo: `https://drive.google.com/drive/folders/1ABC...XYZ`
+   - O ID é: `1ABC...XYZ`
+3. No arquivo `Code.gs`, substitua `YOUR_DRIVE_FOLDER_ID_HERE` pelo ID copiado:
+   ```javascript
+   const FOLDER_ID = '1ABC...XYZ'; // Seu ID aqui
+   ```
+
+### 4. Implantar como Web App
+
+1. Clique em "Implantar" > "Nova implantação"
+2. Clique no ícone de engrenagem ⚙️ e selecione "Web app"
+3. Configure:
+   - **Descrição**: Lançamentos Financeiros v1
+   - **Executar como**: Eu (seu e-mail)
+   - **Quem tem acesso**: Qualquer pessoa (ou conforme sua necessidade)
+4. Clique em "Implantar"
+5. Autorize o aplicativo quando solicitado
+6. Copie o URL do Web App gerado
+
+### 5. Usar o aplicativo
+
+1. Acesse o URL do Web App em seu dispositivo móvel
+2. Adicione o site à tela inicial para acesso rápido:
+   - **iOS**: Safari > Compartilhar > Adicionar à Tela de Início
+   - **Android**: Chrome > Menu > Adicionar à tela inicial
+
+## 📱 Como Usar
+
+1. **Preencha os dados**:
+   - Selecione a data (padrão: hoje)
+   - Digite o nome do parceiro
+   - Descreva a movimentação
+   - Escolha o tipo (Receita ou Gasto)
+   - Informe suas iniciais (ex: MR, AB)
+
+2. **Adicione a foto**:
+   - Toque na área de foto
+   - Escolha tirar nova foto ou selecionar da galeria
+   - A prévia será exibida
+
+3. **Salve**:
+   - Clique em "Salvar Lançamento"
+   - Aguarde a confirmação
+   - O arquivo será salvo automaticamente no Drive
+
+## 📂 Padrão de Nomenclatura
+
+Os arquivos são salvos seguindo o padrão:
+
+```
+AAMMDD[seq][Iniciais] - Parceiro - Descrição.jpg
+```
+
+**Exemplo**:
+- Primeiro lançamento do dia 19/01/2026 por MR: `260119aMR - Loja ABC - Compra material.jpg`
+- Segundo lançamento do mesmo dia: `260119bMR - Restaurante - Almoço equipe.jpg`
+- Terceiro lançamento: `260119cMR - Cliente XYZ - Venda produto.jpg`
+
+### Lógica de Sequenciamento
+
+O sistema:
+1. Lê todos os arquivos na pasta do Drive
+2. Conta quantos começam com o prefixo da data (AAMMDD)
+3. Gera a letra sequencial: 0='a', 1='b', 2='c', etc.
+4. Garante que não haverá conflitos de nomes
+
+## 🛠️ Estrutura dos Arquivos
+
+### Code.gs
+Backend do Google Apps Script contendo:
+- `doGet()`: Serve a interface HTML
+- `processForm()`: Processa e salva os dados
+- `generateFileName()`: Gera o nome do arquivo com lógica sequencial
+- `sanitizeFileName()`: Limpa caracteres inválidos
+- Funções auxiliares para formatação
+
+### Index.html
+Interface HTML responsiva com:
+- Design mobile-first
+- Captura de foto via câmera
+- Validação de formulário
+- Feedback visual
+- Animações e transições suaves
+
+## 🔒 Segurança
+
+- Os dados são armazenados no seu Google Drive
+- Apenas usuários autorizados podem acessar (configure nas permissões)
+- Imagens e informações ficam privadas na sua conta
+- Sem servidor externo - tudo dentro do ecossistema Google
+
+## 🔄 Atualizações
+
+Para atualizar o aplicativo:
+1. Faça as alterações no código
+2. Vá em "Implantar" > "Gerenciar implantações"
+3. Clique no ícone de edição ✏️
+4. Selecione "Nova versão"
+5. Clique em "Implantar"
+
+## 📞 Suporte
+
+Para problemas ou dúvidas:
+- Verifique se o FOLDER_ID está correto
+- Confirme as permissões de acesso ao Drive
+- Use a função `testFolderAccess()` no Apps Script para testar
+
+## 📄 Licença
+
+Este projeto é de código aberto e pode ser usado livremente.

@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lançamentos Financeiros</title>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 8px;
+    }
+    
+    .radio-option {
+      flex: 1;
+      position: relative;
+    }
+    
+    .radio-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+    }
+    
+    .radio-option label {
+      display: block;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 0;
+    }
+    
+    .radio-option input[type="radio"]:checked + label {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .photo-section {
+      border: 2px dashed #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f9f9f9;
+    }
+    
+    .photo-section:hover {
+      border-color: #667eea;
+      background: #f5f7ff;
+    }
+    
+    .photo-section.has-photo {
+      border-style: solid;
+      border-color: #667eea;
+      padding: 10px;
+    }
+    
+    #photoPreview {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 10px;
+      display: none;
+    }
+    
+    #photoPreview.show {
+      display: block;
+    }
+    
+    .photo-icon {
+      font-size: 48px;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .photo-text {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    #photoInput {
+      display: none;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+    
+    .message.show {
+      display: block;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .loading.show {
+      display: block;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 20px;
+      }
+      
+      body {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 Lançamentos Financeiros</h1>
+    <p class="subtitle">Registre suas movimentações</p>
+    
+    <div id="message" class="message"></div>
+    
+    <form id="transactionForm">
+      <div class="form-group">
+        <label for="date">Data</label>
+        <input type="date" id="date" name="date" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="partner">Parceiro</label>
+        <input type="text" id="partner" name="partner" placeholder="Ex: Fornecedor ABC" required>
+      </div>
+      
+      <div class="form-group">
+        <label for="description">Descrição</label>
+        <textarea id="description" name="description" placeholder="Descrição da movimentação" required></textarea>
+      </div>
+      
+      <div class="form-group">
+        <label>Tipo</label>
+        <div class="radio-group">
+          <div class="radio-option">
+            <input type="radio" id="receita" name="type" value="Receita" checked>
+            <label for="receita">💵 Receita</label>
+          </div>
+          <div class="radio-option">
+            <input type="radio" id="gasto" name="type" value="Gasto">
+            <label for="gasto">💸 Gasto</label>
+          </div>
+        </div>
+      </div>
+      
+      <div class="form-group">
+        <label for="user">Usuário (Iniciais)</label>
+        <input type="text" id="user" name="user" placeholder="Ex: MR" maxlength="3" style="text-transform: uppercase;" required>
+      </div>
+      
+      <div class="form-group">
+        <label>Foto</label>
+        <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
+          <input type="file" id="photoInput" accept="image/*" capture="environment">
+          <div id="photoPlaceholder">
+            <div class="photo-icon">📷</div>
+            <div class="photo-text">Toque para tirar foto ou selecionar imagem</div>
+          </div>
+          <img id="photoPreview" alt="Preview">
+        </div>
+      </div>
+      
+      <button type="submit" class="btn btn-primary" id="submitBtn">
+        Salvar Lançamento
+      </button>
+      
+      <button type="button" class="btn btn-secondary" onclick="resetForm()">
+        Limpar Formulário
+      </button>
+    </form>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p>Salvando lançamento...</p>
+    </div>
+  </div>
+  
+  <script>
+    // Set today's date as default
+    document.getElementById('date').valueAsDate = new Date();
+    
+    // Convert user input to uppercase
+    document.getElementById('user').addEventListener('input', function(e) {
+      e.target.value = e.target.value.toUpperCase();
+    });
+    
+    // Handle photo selection
+    let photoData = null;
+    
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+      const file = e.target.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(event) {
+          photoData = event.target.result;
+          document.getElementById('photoPreview').src = photoData;
+          document.getElementById('photoPreview').classList.add('show');
+          document.getElementById('photoPlaceholder').style.display = 'none';
+          document.getElementById('photoSection').classList.add('has-photo');
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+    
+    // Handle form submission
+    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Validate photo
+      if (!photoData) {
+        showMessage('Por favor, adicione uma foto.', 'error');
+        return;
+      }
+      
+      // Get form data
+      const formData = {
+        date: document.getElementById('date').value,
+        partner: document.getElementById('partner').value,
+        description: document.getElementById('description').value,
+        type: document.querySelector('input[name="type"]:checked').value,
+        user: document.getElementById('user').value,
+        image: photoData
+      };
+      
+      // Show loading
+      document.getElementById('transactionForm').style.display = 'none';
+      document.getElementById('loading').classList.add('show');
+      
+      // Submit to server
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .processForm(formData);
+    });
+    
+    function onSuccess(result) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('transactionForm').style.display = 'block';
+      
+      if (result.success) {
+        showMessage(result.message + ' Arquivo: ' + result.filename, 'success');
+        resetForm();
+      } else {
+        showMessage(result.message, 'error');
+      }
+    }
+    
+    function onFailure(error) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('transactionForm').style.display = 'block';
+      showMessage('Erro ao processar: ' + error.message, 'error');
+    }
+    
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = 'message show ' + type;
+      
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          messageDiv.classList.remove('show');
+        }, 5000);
+      }
+    }
+    
+    function resetForm() {
+      document.getElementById('transactionForm').reset();
+      document.getElementById('date').valueAsDate = new Date();
+      photoData = null;
+      document.getElementById('photoPreview').classList.remove('show');
+      document.getElementById('photoPreview').src = '';
+      document.getElementById('photoPlaceholder').style.display = 'block';
+      document.getElementById('photoSection').classList.remove('has-photo');
+      document.getElementById('message').classList.remove('show');
+    }
+  </script>
+</body>
+</html>
