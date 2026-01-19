@@ -1165,15 +1165,16 @@
           pdfData: pdfData // Single PDF instead of multiple images
         };
         
-        // Save to local storage first
+        // Save to local storage first and get the transaction ID
         saveToLocalStorage(formData);
+        const transactionId = formData.id;
         
         progressBar.style.width = '80%';
         
         // Submit to server
         google.script.run
           .withSuccessHandler(function(result) {
-            onSuccess(result, formData.id);
+            onSuccess(result, transactionId);
           })
           .withFailureHandler(onFailure)
           .processForm(formData);
