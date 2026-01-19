@@ -547,12 +547,16 @@
     
     // Handle multiple photo selection
     let photosData = [];
+    let loadedPhotos = 0;
+    let totalPhotos = 0;
     
     document.getElementById('photoInput').addEventListener('change', function(e) {
       const files = e.target.files;
       if (files.length > 0) {
         // Clear previous photos
         photosData = [];
+        loadedPhotos = 0;
+        totalPhotos = files.length;
         const container = document.getElementById('photoPreviewContainer');
         container.innerHTML = '';
         document.getElementById('photoPlaceholder').style.display = 'none';
@@ -562,7 +566,8 @@
         Array.from(files).forEach((file, index) => {
           const reader = new FileReader();
           reader.onload = function(event) {
-            photosData.push(event.target.result);
+            photosData[index] = event.target.result;
+            loadedPhotos++;
             
             // Create preview element
             const previewItem = document.createElement('div');
@@ -572,11 +577,25 @@
               <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
             `;
             container.appendChild(previewItem);
+            
+            // Update submit button text
+            updateSubmitButton();
           };
           reader.readAsDataURL(file);
         });
       }
     });
+    
+    function updateSubmitButton() {
+      const btn = document.getElementById('submitBtn');
+      if (loadedPhotos < totalPhotos && totalPhotos > 0) {
+        btn.textContent = `Carregando fotos (${loadedPhotos}/${totalPhotos})...`;
+        btn.disabled = true;
+      } else {
+        btn.textContent = 'Salvar Lançamento';
+        btn.disabled = false;
+      }
+    }
     
     // Remove a specific photo
     function removePhoto(index) {
@@ -606,8 +625,9 @@
     document.getElementById('transactionForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Validate photos
-      if (photosData.length === 0) {
+      // Filter out any null/undefined photos and validate
+      const validPhotos = photosData.filter(p => p != null && p !== '');
+      if (validPhotos.length === 0) {
         showMessage('Por favor, adicione pelo menos uma foto.', 'error');
         return;
       }
@@ -620,7 +640,7 @@
         type: document.querySelector('input[name="type"]:checked').value,
         user: document.getElementById('user').value,
         value: document.getElementById('value').value,
-        images: photosData
+        images: validPhotos
       };
       
       // Show loading
@@ -669,10 +689,13 @@
       document.getElementById('transactionForm').reset();
       document.getElementById('date').valueAsDate = new Date();
       photosData = [];
+      loadedPhotos = 0;
+      totalPhotos = 0;
       document.getElementById('photoPreviewContainer').innerHTML = '';
       document.getElementById('photoPlaceholder').style.display = 'block';
       document.getElementById('photoSection').classList.remove('has-photo');
       document.getElementById('message').classList.remove('show');
+      updateSubmitButton();
     }
   </script>
 </body>

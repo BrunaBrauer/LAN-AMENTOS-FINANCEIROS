@@ -31,26 +31,46 @@ function processForm(formData) {
     const value = formData.value;
     const imagesData = formData.images; // Array of images
     
-    // Generate filename with sequential logic
-    const filename = generateFileName(folder, date, userInitials, partner, description, type, value);
+    // Generate base filename with sequential logic
+    const baseFilename = generateFileName(folder, date, userInitials, partner, description, type, value);
     
-    // Create PDF with all images
-    const pdfBlob = createPdfFromImages(imagesData, filename);
+    // Save each image as a separate file
+    const savedFiles = [];
+    for (let i = 0; i < imagesData.length; i++) {
+      // Add page number to filename for multiple images
+      let filename = baseFilename;
+      if (imagesData.length > 1) {
+        // Remove .pdf extension and add page number
+        filename = baseFilename.replace('.pdf', ` - Pag${i + 1}.jpg`);
+      } else {
+        // Single image, just change extension to .jpg
+        filename = baseFilename.replace('.pdf', '.jpg');
+      }
+      
+      // Process image data (remove data URL prefix)
+      const base64Data = imagesData[i].split(',')[1];
+      const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/jpeg', filename);
+      
+      // Save file to Drive
+      const file = folder.createFile(blob);
+      
+      // Set file description with transaction details
+      file.setDescription(`Tipo: ${type}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}\nValor: R$ ${value}\nPágina: ${i + 1} de ${imagesData.length}`);
+      
+      savedFiles.push({
+        name: filename,
+        url: file.getUrl()
+      });
+    }
     
-    // Save file to Drive
-    const file = folder.createFile(pdfBlob);
-    
-    // Set file description with transaction details
-    file.setDescription(`Tipo: ${type}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}\nValor: R$ ${value}`);
-    
-    // Save to spreadsheet
-    saveToSpreadsheet(date, partner, description, type, userInitials, value, filename, file.getUrl());
+    // Save to spreadsheet (use first file info)
+    saveToSpreadsheet(date, partner, description, type, userInitials, value, savedFiles[0].name, savedFiles[0].url);
     
     return {
       success: true,
-      message: 'Lançamento salvo com sucesso!',
-      filename: filename,
-      fileId: file.getId()
+      message: `Lançamento salvo com sucesso! ${savedFiles.length} imagem(ns) salva(s).`,
+      filename: savedFiles.map(f => f.name).join(', '),
+      fileId: savedFiles[0].url
     };
   } catch (error) {
     Logger.log('Error in processForm: ' + error.toString());
@@ -174,46 +194,6 @@ function formatCurrency(value) {
   const formatted = decimalPart ? `${integerPart},${decimalPart}` : integerPart;
   
   return `R$ ${formatted}`;
-}
-
-/**
- * Creates a PDF from multiple images (one image per page)
- * @param {Array} imagesData - Array of base64 image data
- * @param {string} filename - Name for the PDF
- * @return {Blob} PDF blob
- */
-function createPdfFromImages(imagesData, filename) {
-  // Create a temporary Google Doc with timestamp-based name
-  const tempName = 'Temp_PDF_' + Date.now();
-  const doc = DocumentApp.create(tempName);
-  const body = doc.getBody();
-  
-  // Add each image to the document (one per page)
-  for (let i = 0; i < imagesData.length; i++) {
-    if (i > 0) {
-      body.appendPageBreak();
-    }
-    
-    // Process image data (remove data URL prefix)
-    const base64Data = imagesData[i].split(',')[1];
-    const imageBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/jpeg', `image_${i}.jpg`);
-    
-    // Insert image
-    body.appendImage(imageBlob);
-  }
-  
-  // Save and close the document
-  doc.saveAndClose();
-  
-  // Get the document as PDF
-  const docFile = DriveApp.getFileById(doc.getId());
-  const pdfBlob = docFile.getAs('application/pdf');
-  pdfBlob.setName(filename);
-  
-  // Permanently delete the temporary document
-  DriveApp.removeFile(docFile);
-  
-  return pdfBlob;
 }
 
 /**
