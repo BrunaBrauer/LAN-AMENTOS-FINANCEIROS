@@ -62,6 +62,10 @@ O sistema:
    - 0 arquivos encontrados → letra 'a' (primeiro do dia)
    - 1 arquivo encontrado → letra 'b' (segundo do dia)
    - 2 arquivos encontrados → letra 'c' (terceiro do dia)
+   - ...
+   - 25 arquivos encontrados → letra 'z' (26º do dia)
+   - 26 arquivos encontrados → letras 'aa' (27º do dia)
+   - 27 arquivos encontrados → letras 'ab' (28º do dia)
    - E assim por diante...
 
 ## Vantagens
@@ -74,8 +78,9 @@ O sistema:
 
 ## Limitações
 
-- Suporta até 26 lançamentos por dia por usuário (a-z)
-- Se precisar mais, o código pode ser estendido para usar 'aa', 'ab', etc.
+- Suporta praticamente ilimitados lançamentos por dia
+- Sequência: a-z (26), depois aa-az (26), ba-bz (26), etc.
+- Sistema escalável para alto volume de transações
 
 ## Caracteres Especiais
 

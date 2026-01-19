@@ -86,8 +86,17 @@ function generateFileName(folder, date, initials, partner, description) {
     }
   }
   
-  // Generate sequential letter (0='a', 1='b', 2='c', etc.)
-  const seqLetter = String.fromCharCode(97 + count); // 97 is 'a' in ASCII
+  // Generate sequential letter (0='a', 1='b', 2='c', ..., 26='aa', 27='ab', etc.)
+  let seqLetter = '';
+  if (count < 26) {
+    // Single letter a-z
+    seqLetter = String.fromCharCode(97 + count);
+  } else {
+    // Multiple letters for counts >= 26: aa, ab, ac, etc.
+    const firstLetter = String.fromCharCode(97 + Math.floor(count / 26) - 1);
+    const secondLetter = String.fromCharCode(97 + (count % 26));
+    seqLetter = firstLetter + secondLetter;
+  }
   
   // Sanitize partner and description (remove special characters)
   const sanitizedPartner = sanitizeFileName(partner);
