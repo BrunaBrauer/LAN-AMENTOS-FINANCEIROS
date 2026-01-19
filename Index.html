@@ -3,12 +3,13 @@
 <head>
   <base target="_top">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#667eea">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#5e72e4">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Lançamentos">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="format-detection" content="telephone=no">
   <title>Lançamentos Financeiros</title>
   
   <!-- jsPDF Library -->
@@ -46,7 +47,8 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
-      font-size: 16px;
+      font-size: 18px;
+      line-height: 1.6;
     }
     
     .app-header {
@@ -62,10 +64,11 @@
     }
     
     .app-header h1 {
-      font-size: 22px;
-      font-weight: 600;
+      font-size: 24px;
+      font-weight: 700;
       text-align: center;
       margin: 0;
+      letter-spacing: -0.5px;
     }
     
     .sync-badge {
@@ -130,22 +133,22 @@
     
     .tab {
       flex: 1;
-      padding: 18px 12px;
+      padding: 20px 12px;
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 18px;
+      font-weight: 700;
       color: var(--text-secondary);
       border-bottom: 3px solid transparent;
-      transition: all 0.3s;
+      transition: all 0.15s;
       position: relative;
     }
     
     .tab.active {
       color: var(--primary-color);
       border-bottom-color: var(--primary-color);
-      background: rgba(102, 126, 234, 0.05);
+      background: rgba(94, 114, 228, 0.08);
     }
     
     .tab-content {
@@ -165,15 +168,16 @@
     }
     
     .form-group {
-      margin-bottom: 24px;
+      margin-bottom: 28px;
     }
     
     label {
       display: block;
       color: var(--text-color);
-      font-weight: 600;
-      margin-bottom: 10px;
-      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      font-size: 18px;
+      letter-spacing: -0.2px;
     }
     
     input[type="text"],
@@ -181,14 +185,15 @@
     select,
     textarea {
       width: 100%;
-      padding: 14px 16px;
+      padding: 16px 18px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
-      font-size: 17px;
+      font-size: 19px;
       transition: all 0.15s ease;
       font-family: inherit;
       background: white;
       color: var(--text-color);
+      font-weight: 500;
     }
     
     input:focus,
@@ -201,7 +206,8 @@
     
     textarea {
       resize: vertical;
-      min-height: 100px;
+      min-height: 120px;
+      line-height: 1.6;
     }
     
     .radio-group {
@@ -222,7 +228,7 @@
     
     .radio-option label {
       display: block;
-      padding: 14px;
+      padding: 16px;
       border: 1px solid var(--border-color);
       border-radius: 6px;
       text-align: center;
@@ -230,7 +236,8 @@
       transition: all 0.15s ease;
       margin: 0;
       background: white;
-      font-size: 16px;
+      font-size: 18px;
+      font-weight: 600;
     }
     
     .radio-option input[type="radio"]:checked + label {
@@ -371,16 +378,17 @@
     
     .btn {
       width: 100%;
-      padding: 16px;
+      padding: 18px;
       border: none;
       border-radius: 6px;
-      font-size: 17px;
-      font-weight: 600;
+      font-size: 19px;
+      font-weight: 700;
       cursor: pointer;
       transition: all 0.15s ease;
       margin-top: 10px;
       position: relative;
       overflow: hidden;
+      letter-spacing: -0.2px;
     }
     
     .btn-primary {
@@ -1144,45 +1152,49 @@
         try {
           // Get image dimensions
           const img = await loadImage(images[i].data);
-          const pageWidth = pdf.internal.pageSize.getWidth();
-          const pageHeight = pdf.internal.pageSize.getHeight();
           
-          // Calculate scaling to fit page with margins, maintaining aspect ratio
-          const margin = 15;
-          const maxWidth = pageWidth - (2 * margin);
-          const maxHeight = pageHeight - (2 * margin);
+          // PDF page dimensions in mm (A4)
+          const pageWidth = 210; // A4 width in mm
+          const pageHeight = 297; // A4 height in mm
+          const margin = 20; // Larger margins
           
-          // Calculate aspect ratios
-          const imgAspectRatio = img.width / img.height;
-          const pageAspectRatio = maxWidth / maxHeight;
+          // Available space for image
+          const availableWidth = pageWidth - (2 * margin);
+          const availableHeight = pageHeight - (2 * margin);
           
-          let pdfWidth, pdfHeight;
+          // Calculate image aspect ratio
+          const imageAspectRatio = img.width / img.height;
+          const availableAspectRatio = availableWidth / availableHeight;
           
-          // Fit image to page while maintaining aspect ratio
-          if (imgAspectRatio > pageAspectRatio) {
-            // Image is wider - fit to width
-            pdfWidth = maxWidth;
-            pdfHeight = maxWidth / imgAspectRatio;
+          let finalWidth, finalHeight;
+          
+          // CRITICAL: Maintain aspect ratio by fitting to the limiting dimension
+          if (imageAspectRatio > availableAspectRatio) {
+            // Image is relatively wider than available space - constrain by width
+            finalWidth = availableWidth;
+            finalHeight = availableWidth / imageAspectRatio;
           } else {
-            // Image is taller - fit to height
-            pdfHeight = maxHeight;
-            pdfWidth = maxHeight * imgAspectRatio;
+            // Image is relatively taller than available space - constrain by height
+            finalHeight = availableHeight;
+            finalWidth = availableHeight * imageAspectRatio;
           }
           
-          // Center on page
-          const x = (pageWidth - pdfWidth) / 2;
-          const y = (pageHeight - pdfHeight) / 2;
+          // Center the image on the page
+          const xPosition = (pageWidth - finalWidth) / 2;
+          const yPosition = (pageHeight - finalHeight) / 2;
           
-          // Determine image format from MIME type
-          let format = 'JPEG'; // default
+          // Determine image format
+          let format = 'JPEG';
           if (images[i].type === 'image/png') {
             format = 'PNG';
           } else if (images[i].type === 'image/jpeg' || images[i].type === 'image/jpg') {
             format = 'JPEG';
           }
           
-          // Add image to PDF with detected format and proper dimensions
-          pdf.addImage(images[i].data, format, x, y, pdfWidth, pdfHeight, undefined, 'FAST');
+          console.log(`Image ${i+1}: ${img.width}x${img.height}, Ratio: ${imageAspectRatio.toFixed(2)}, PDF: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}mm`);
+          
+          // Add image to PDF with calculated dimensions
+          pdf.addImage(images[i].data, format, xPosition, yPosition, finalWidth, finalHeight, undefined, 'FAST');
         } catch (err) {
           console.error('Error adding image to PDF:', err);
         }
