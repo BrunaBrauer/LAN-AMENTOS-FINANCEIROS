@@ -1,5 +1,6 @@
 // Configuration
 const FOLDER_ID = 'YOUR_DRIVE_FOLDER_ID_HERE'; // Replace with your Google Drive folder ID
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // Replace with your Google Spreadsheet ID
 
 /**
  * Serves the HTML interface for the web app
@@ -12,7 +13,7 @@ function doGet() {
 
 /**
  * Processes the form submission and saves the file to Drive
- * @param {Object} formData - Form data including image, date, partner, description, type, user, value
+ * @param {Object} formData - Form data including images, date, partner, description, type, user, value
  * @return {Object} Result object with success status and message
  */
 function processForm(formData) {
@@ -28,20 +29,22 @@ function processForm(formData) {
     const type = formData.type;
     const userInitials = formData.user;
     const value = formData.value;
-    const imageData = formData.image;
+    const imagesData = formData.images; // Array of images
     
     // Generate filename with sequential logic
     const filename = generateFileName(folder, date, userInitials, partner, description, type, value);
     
-    // Process image data (remove data URL prefix)
-    const base64Data = imageData.split(',')[1];
-    const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/jpeg', filename);
+    // Create PDF with all images
+    const pdfBlob = createPdfFromImages(imagesData, filename);
     
     // Save file to Drive
-    const file = folder.createFile(blob);
+    const file = folder.createFile(pdfBlob);
     
     // Set file description with transaction details
-    file.setDescription(`Tipo: ${type}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}`);
+    file.setDescription(`Tipo: ${type}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}\nValor: R$ ${value}`);
+    
+    // Save to spreadsheet
+    saveToSpreadsheet(date, partner, description, type, userInitials, value, filename, file.getUrl());
     
     return {
       success: true,
@@ -59,7 +62,7 @@ function processForm(formData) {
 }
 
 /**
- * Generates filename with sequential logic: AAMMDD[seq][Iniciais] [TYPE] DESCRIPTION - PARTNER - R$ VALUE.jpg
+ * Generates filename with sequential logic: AAMMDD[seq][Iniciais] [TYPE] CONTA PAGA TULA CX - DESCRIPTION - PARTNER - R$ VALUE.pdf
  * @param {Folder} folder - Drive folder
  * @param {Date} date - Transaction date
  * @param {string} initials - User initials
@@ -109,15 +112,15 @@ function generateFileName(folder, date, initials, partner, description, type, va
   const sanitizedPartner = sanitizeFileName(partner).toUpperCase();
   const sanitizedDesc = sanitizeFileName(description).toUpperCase();
   
-  // Format value
-  const formattedValue = value ? `R$ ${value}` : '';
+  // Format value with thousands separator (1.000,00)
+  const formattedValue = formatCurrency(value);
   
-  // Build filename: AAMMDD[seq][Iniciais] [TYPE] DESCRIPTION - PARTNER - R$ VALUE.jpg
-  let filename = `${datePrefix}${seqLetter}${initials} ${typePrefix} ${sanitizedDesc} - ${sanitizedPartner}`;
+  // Build filename: AAMMDD[seq][Iniciais] [TYPE] CONTA PAGA TULA CX - DESCRIPTION - PARTNER - R$ VALUE.pdf
+  let filename = `${datePrefix}${seqLetter}${initials} ${typePrefix} CONTA PAGA TULA CX - ${sanitizedDesc} - ${sanitizedPartner}`;
   if (formattedValue) {
     filename += ` - ${formattedValue}`;
   }
-  filename += '.jpg';
+  filename += '.pdf';
   
   return filename;
 }
@@ -149,28 +152,140 @@ function formatDate(date) {
 }
 
 /**
- * Gets list of files from Drive folder for history display
- * @param {number} limit - Maximum number of files to return
- * @return {Array} Array of file objects with name, url, date
+ * Formats currency with thousands separator
+ * @param {string} value - Value to format (e.g., "1226,61")
+ * @return {string} Formatted currency (e.g., "R$ 1.226,61")
+ */
+function formatCurrency(value) {
+  if (!value) return '';
+  
+  // Remove any existing formatting
+  let cleanValue = value.replace(/[^\d,]/g, '');
+  
+  // Split integer and decimal parts
+  const parts = cleanValue.split(',');
+  let integerPart = parts[0];
+  const decimalPart = parts[1] || '';
+  
+  // Add thousands separator
+  integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  
+  // Combine with decimal part
+  const formatted = decimalPart ? `${integerPart},${decimalPart}` : integerPart;
+  
+  return `R$ ${formatted}`;
+}
+
+/**
+ * Creates a PDF from multiple images (one image per page)
+ * @param {Array} imagesData - Array of base64 image data
+ * @param {string} filename - Name for the PDF
+ * @return {Blob} PDF blob
+ */
+function createPdfFromImages(imagesData, filename) {
+  // Create a temporary Google Doc to convert to PDF
+  const doc = DocumentApp.create('Temp_' + filename);
+  const body = doc.getBody();
+  
+  // Add each image to the document (one per page)
+  for (let i = 0; i < imagesData.length; i++) {
+    if (i > 0) {
+      body.appendPageBreak();
+    }
+    
+    // Process image data (remove data URL prefix)
+    const base64Data = imagesData[i].split(',')[1];
+    const imageBlob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/jpeg', `image_${i}.jpg`);
+    
+    // Insert image
+    body.appendImage(imageBlob);
+  }
+  
+  // Save and close the document
+  doc.saveAndClose();
+  
+  // Get the document as PDF
+  const docFile = DriveApp.getFileById(doc.getId());
+  const pdfBlob = docFile.getAs('application/pdf');
+  pdfBlob.setName(filename);
+  
+  // Delete the temporary document
+  docFile.setTrashed(true);
+  
+  return pdfBlob;
+}
+
+/**
+ * Saves transaction data to spreadsheet
+ * @param {Date} date - Transaction date
+ * @param {string} partner - Partner name
+ * @param {string} description - Description
+ * @param {string} type - Type (Receita/Gasto)
+ * @param {string} user - User initials
+ * @param {string} value - Value
+ * @param {string} filename - File name
+ * @param {string} fileUrl - File URL
+ */
+function saveToSpreadsheet(date, partner, description, type, user, value, filename, fileUrl) {
+  try {
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
+    
+    // If this is the first entry, add headers
+    if (sheet.getLastRow() === 0) {
+      sheet.appendRow(['Data', 'Parceiro', 'Descrição', 'Tipo', 'Usuário', 'Valor', 'Arquivo', 'Link']);
+      sheet.getRange(1, 1, 1, 8).setFontWeight('bold');
+    }
+    
+    // Add the transaction data
+    sheet.appendRow([
+      formatDate(date),
+      partner,
+      description,
+      type,
+      user,
+      formatCurrency(value),
+      filename,
+      fileUrl
+    ]);
+  } catch (error) {
+    Logger.log('Error saving to spreadsheet: ' + error.toString());
+    // Don't throw error - file is already saved to Drive
+  }
+}
+
+/**
+ * Gets list of transactions from spreadsheet for history display
+ * @param {number} limit - Maximum number of records to return
+ * @return {Object} Result with transaction list
  */
 function getFileHistory(limit = 50) {
   try {
-    const folder = DriveApp.getFolderById(FOLDER_ID);
-    const files = folder.getFiles();
-    const fileList = [];
+    const sheet = SpreadsheetApp.openById(SPREADSHEET_ID).getActiveSheet();
+    const lastRow = sheet.getLastRow();
     
-    while (files.hasNext() && fileList.length < limit) {
-      const file = files.next();
-      fileList.push({
-        name: file.getName(),
-        url: file.getUrl(),
-        date: file.getDateCreated(),
-        size: file.getSize()
-      });
+    if (lastRow <= 1) {
+      return {
+        success: true,
+        files: []
+      };
     }
     
-    // Sort by date, most recent first
-    fileList.sort((a, b) => b.date - a.date);
+    // Get data (skip header row)
+    const startRow = Math.max(2, lastRow - limit + 1);
+    const numRows = lastRow - startRow + 1;
+    const data = sheet.getRange(startRow, 1, numRows, 8).getValues();
+    
+    // Convert to objects and reverse (newest first)
+    const fileList = data.reverse().map(row => ({
+      date: row[0],
+      partner: row[1],
+      description: row[2],
+      type: row[3],
+      user: row[4],
+      value: row[5],
+      name: row[6],
+      url: row[7]
+    }));
     
     return {
       success: true,

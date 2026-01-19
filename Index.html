@@ -171,15 +171,42 @@
       padding: 10px;
     }
     
-    #photoPreview {
-      max-width: 100%;
-      max-height: 300px;
-      border-radius: 10px;
-      display: none;
+    #photoPreviewContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
     }
     
-    #photoPreview.show {
-      display: block;
+    .photo-preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    .photo-preview-item .remove-photo {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .photo-icon {
@@ -391,14 +418,14 @@
         </div>
         
         <div class="form-group">
-          <label>Foto</label>
+          <label>Fotos</label>
           <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
-            <input type="file" id="photoInput" accept="image/*" capture="environment">
+            <input type="file" id="photoInput" accept="image/*" capture="environment" multiple>
             <div id="photoPlaceholder">
               <div class="photo-icon">📷</div>
-              <div class="photo-text">Toque para tirar foto ou selecionar imagem</div>
+              <div class="photo-text">Toque para adicionar fotos (múltiplas)</div>
             </div>
-            <img id="photoPreview" alt="Preview">
+            <div id="photoPreviewContainer"></div>
           </div>
         </div>
         
@@ -476,12 +503,10 @@
       if (result.success && result.files.length > 0) {
         const historyList = document.getElementById('historyList');
         historyList.innerHTML = result.files.map(file => {
-          const date = new Date(file.date);
-          const dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
           return `
             <div class="history-item">
               <a href="${file.url}" target="_blank">${file.name}</a>
-              <div class="history-date">${dateStr}</div>
+              <div class="history-date">${file.date} - ${file.type} - ${file.value}</div>
             </div>
           `;
         }).join('');
@@ -497,39 +522,81 @@
         '<div class="no-history">Erro ao carregar histórico: ' + error.message + '</div>';
     }
     
-    // Format value input
+    // Format value input with thousands separator
     document.getElementById('value').addEventListener('input', function(e) {
       let value = e.target.value;
-      // Remove non-numeric characters except comma (Brazilian format)
+      // Remove all non-numeric characters except comma
       value = value.replace(/[^\d,]/g, '');
+      
+      // Split by comma to get integer and decimal parts
+      const parts = value.split(',');
+      let integerPart = parts[0];
+      const decimalPart = parts[1];
+      
+      // Remove existing dots
+      integerPart = integerPart.replace(/\./g, '');
+      
+      // Add thousands separator
+      integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      
+      // Reconstruct value
+      value = decimalPart !== undefined ? integerPart + ',' + decimalPart : integerPart;
+      
       e.target.value = value;
     });
     
-    // Handle photo selection
-    let photoData = null;
+    // Handle multiple photo selection
+    let photosData = [];
     
     document.getElementById('photoInput').addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = function(event) {
-          photoData = event.target.result;
-          document.getElementById('photoPreview').src = photoData;
-          document.getElementById('photoPreview').classList.add('show');
-          document.getElementById('photoPlaceholder').style.display = 'none';
-          document.getElementById('photoSection').classList.add('has-photo');
-        };
-        reader.readAsDataURL(file);
+      const files = e.target.files;
+      if (files.length > 0) {
+        // Clear previous photos
+        photosData = [];
+        const container = document.getElementById('photoPreviewContainer');
+        container.innerHTML = '';
+        document.getElementById('photoPlaceholder').style.display = 'none';
+        document.getElementById('photoSection').classList.add('has-photo');
+        
+        // Process each file
+        Array.from(files).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            photosData.push(event.target.result);
+            
+            // Create preview element
+            const previewItem = document.createElement('div');
+            previewItem.className = 'photo-preview-item';
+            previewItem.innerHTML = `
+              <img src="${event.target.result}" alt="Preview ${index + 1}">
+              <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+            `;
+            container.appendChild(previewItem);
+          };
+          reader.readAsDataURL(file);
+        });
       }
     });
+    
+    // Remove a specific photo
+    function removePhoto(index) {
+      photosData.splice(index, 1);
+      const container = document.getElementById('photoPreviewContainer');
+      container.children[index].remove();
+      
+      if (photosData.length === 0) {
+        document.getElementById('photoPlaceholder').style.display = 'block';
+        document.getElementById('photoSection').classList.remove('has-photo');
+      }
+    }
     
     // Handle form submission
     document.getElementById('transactionForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Validate photo
-      if (!photoData) {
-        showMessage('Por favor, adicione uma foto.', 'error');
+      // Validate photos
+      if (photosData.length === 0) {
+        showMessage('Por favor, adicione pelo menos uma foto.', 'error');
         return;
       }
       
@@ -541,7 +608,7 @@
         type: document.querySelector('input[name="type"]:checked').value,
         user: document.getElementById('user').value,
         value: document.getElementById('value').value,
-        image: photoData
+        images: photosData
       };
       
       // Show loading
@@ -589,9 +656,8 @@
     function resetForm() {
       document.getElementById('transactionForm').reset();
       document.getElementById('date').valueAsDate = new Date();
-      photoData = null;
-      document.getElementById('photoPreview').classList.remove('show');
-      document.getElementById('photoPreview').src = '';
+      photosData = [];
+      document.getElementById('photoPreviewContainer').innerHTML = '';
       document.getElementById('photoPlaceholder').style.display = 'block';
       document.getElementById('photoSection').classList.remove('has-photo');
       document.getElementById('message').classList.remove('show');

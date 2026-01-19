@@ -11,14 +11,19 @@ App mobile para lançamento de movimentações financeiras com captura de fotos 
   - Descrição detalhada
   - Tipo: Receita ou Gasto
   - Usuário (dropdown): Bruna Brauer (BB), Ivan Braga Ramos (BR), Ana Braga (AB)
-  - Valor monetário
-  - Foto (câmera ou galeria)
-- **Nomenclatura Automática**: Arquivos salvos com padrão `AAMMDD[seq][Iniciais] [TIPO] DESCRIÇÃO - PARCEIRO - R$ VALOR.jpg`
+  - Valor monetário (com formatação automática de milhares)
+  - Múltiplas fotos (câmera ou galeria)
+- **Nomenclatura Automática**: Arquivos salvos como PDF com padrão `AAMMDD[seq][Iniciais] [TIPO] CONTA PAGA TULA CX - DESCRIÇÃO - PARCEIRO - R$ VALOR.pdf`
 - **Tipo no Nome**: [GTO] para Gastos e [REC] para Receitas
+- **Texto Fixo**: "CONTA PAGA TULA CX" incluído automaticamente após o tipo
 - **Texto em Maiúsculas**: Descrição e parceiro automaticamente convertidos para maiúsculas
+- **Formatação de Valor**: Separador de milhares automático (ex: R$ 1.000,00)
+- **Múltiplas Fotos**: Suporte para adicionar várias fotos em um único lançamento
+- **Arquivo PDF**: Todas as fotos são salvas em um único PDF (uma imagem por página)
 - **Sequenciamento Inteligente**: Gera letras sequenciais (a, b, c...) para múltiplos lançamentos na mesma data
 - **Armazenamento no Drive**: Salvamento automático em pasta configurável
-- **Histórico**: Aba para visualizar todos os arquivos salvos no Drive
+- **Histórico em Planilha**: Registros salvos em planilha do Google Sheets para controle
+- **Aba de Histórico**: Visualização de lançamentos salvos diretamente da planilha
 
 ## 🚀 Como Implantar
 
@@ -39,15 +44,22 @@ App mobile para lançamento de movimentações financeiras com captura de fotos 
    - Nomeie como "Index"
    - Cole o conteúdo do arquivo `Index.html` deste repositório
 
-### 3. Configurar a pasta do Google Drive
+### 3. Configurar Google Drive e Planilha
 
-1. Crie uma pasta no Google Drive onde os arquivos serão salvos
+1. **Criar pasta no Google Drive** onde os PDFs serão salvos
 2. Abra a pasta e copie o ID da URL:
    - URL exemplo: `https://drive.google.com/drive/folders/1ABC...XYZ`
    - O ID é: `1ABC...XYZ`
-3. No arquivo `Code.gs`, substitua `YOUR_DRIVE_FOLDER_ID_HERE` pelo ID copiado:
+
+3. **Criar uma planilha do Google Sheets** para o histórico
+4. Abra a planilha e copie o ID da URL:
+   - URL exemplo: `https://docs.google.com/spreadsheets/d/1XYZ...ABC/edit`
+   - O ID é: `1XYZ...ABC`
+
+5. No arquivo `Code.gs`, substitua os IDs:
    ```javascript
-   const FOLDER_ID = '1ABC...XYZ'; // Seu ID aqui
+   const FOLDER_ID = '1ABC...XYZ'; // ID da pasta Drive
+   const SPREADSHEET_ID = '1XYZ...ABC'; // ID da planilha
    ```
 
 ### 4. Implantar como Web App
@@ -77,27 +89,27 @@ App mobile para lançamento de movimentações financeiras com captura de fotos 
    - Descreva a movimentação
    - Escolha o tipo (Receita ou Gasto)
    - Selecione o usuário no dropdown (BB, BR ou AB)
-   - Informe o valor (ex: 1.226,61)
-   - Toque na área de foto para tirar ou selecionar imagem
+   - Informe o valor (será formatado automaticamente: ex: 1.000,00)
+   - Toque na área de fotos para adicionar múltiplas imagens
    - Clique em "Salvar Lançamento"
 
 2. **Aba "Histórico"**:
-   - Visualize todos os arquivos salvos
+   - Visualize todos os lançamentos salvos da planilha
+   - Veja data, tipo, valor e descrição
    - Clique em qualquer arquivo para abri-lo no Drive
-   - Veja data e hora de criação
 
 ## 📂 Padrão de Nomenclatura
 
 Os arquivos são salvos seguindo o padrão:
 
 ```
-AAMMDD[seq][Iniciais] [TIPO] DESCRIÇÃO - PARCEIRO - R$ VALOR.jpg
+AAMMDD[seq][Iniciais] [TIPO] CONTA PAGA TULA CX - DESCRIÇÃO - PARCEIRO - R$ VALOR.pdf
 ```
 
 **Exemplo**:
-- Primeiro lançamento do dia 19/01/2026 por BB: `260119aBB [GTO] CONTA PAGA - KAUESTEEL - R$ 1.226,61.jpg`
-- Segundo lançamento do mesmo dia por BR: `260119bBR [REC] PAGAMENTO CLIENTE - EMPRESA XYZ - R$ 5.500,00.jpg`
-- Terceiro lançamento: `260119cAB [GTO] COMPRA MATERIAL - PAPELARIA - R$ 380,50.jpg`
+- Primeiro lançamento do dia 19/01/2026 por BB: `260119aBB [GTO] CONTA PAGA TULA CX - CONTA PAGA - KAUESTEEL - R$ 1.226,61.pdf`
+- Segundo lançamento do mesmo dia por BR: `260119bBR [REC] CONTA PAGA TULA CX - PAGAMENTO CLIENTE - EMPRESA XYZ - R$ 5.500,00.pdf`
+- Terceiro lançamento: `260119cAB [GTO] CONTA PAGA TULA CX - COMPRA MATERIAL - PAPELARIA - R$ 10.380,50.pdf`
 
 ### Lógica de Sequenciamento
 

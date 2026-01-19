@@ -5,7 +5,7 @@ Este documento demonstra como funciona a lógica de nomenclatura dos arquivos.
 ## Formato
 
 ```
-AAMMDD[seq][Iniciais] [TIPO] DESCRIÇÃO - PARCEIRO - R$ VALOR.jpg
+AAMMDD[seq][Iniciais] [TIPO] CONTA PAGA TULA CX - DESCRIÇÃO - PARCEIRO - R$ VALOR.pdf
 ```
 
 Onde:
@@ -15,9 +15,10 @@ Onde:
 - **[seq]**: Letra sequencial (a, b, c, d...) baseada no número de arquivos com a mesma data
 - **[Iniciais]**: Iniciais do usuário - BB (Bruna Brauer), BR (Ivan Braga Ramos), AB (Ana Braga)
 - **[TIPO]**: [GTO] para Gasto ou [REC] para Receita
+- **CONTA PAGA TULA CX**: Texto fixo obrigatório
 - **DESCRIÇÃO**: Descrição da movimentação (em MAIÚSCULAS)
 - **PARCEIRO**: Nome do fornecedor/cliente (em MAIÚSCULAS)
-- **VALOR**: Valor monetário no formato brasileiro
+- **VALOR**: Valor monetário no formato brasileiro com separador de milhares (ex: R$ 1.226,61)
 
 ## Exemplos Práticos
 
@@ -29,7 +30,7 @@ Onde:
 **Parceiro**: Kauesteel  
 **Valor**: 1.226,61  
 
-**Resultado**: `260119aBB [GTO] CONTA PAGA TULA BB - KAUESTEEL - R$ 1.226,61.jpg`
+**Resultado**: `260119aBB [GTO] CONTA PAGA TULA CX - CONTA PAGA TULA BB - KAUESTEEL - R$ 1.226,61.pdf`
 
 ### Cenário 2: Segundo lançamento do mesmo dia - Receita
 **Data**: 19/01/2026  
@@ -39,7 +40,7 @@ Onde:
 **Parceiro**: Empresa XYZ  
 **Valor**: 5.500,00  
 
-**Resultado**: `260119bBR [REC] PAGAMENTO CLIENTE - EMPRESA XYZ - R$ 5.500,00.jpg`
+**Resultado**: `260119bBR [REC] CONTA PAGA TULA CX - PAGAMENTO CLIENTE - EMPRESA XYZ - R$ 5.500,00.pdf`
 
 ### Cenário 3: Terceiro lançamento, usuário diferente
 **Data**: 19/01/2026  
@@ -47,9 +48,9 @@ Onde:
 **Tipo**: Gasto  
 **Descrição**: Compra material escritório  
 **Parceiro**: Papelaria Central  
-**Valor**: 380,50  
+**Valor**: 10.380,50  
 
-**Resultado**: `260119cAB [GTO] COMPRA MATERIAL ESCRITÓRIO - PAPELARIA CENTRAL - R$ 380,50.jpg`
+**Resultado**: `260119cAB [GTO] CONTA PAGA TULA CX - COMPRA MATERIAL ESCRITÓRIO - PAPELARIA CENTRAL - R$ 10.380,50.pdf`
 
 ### Cenário 4: Lançamentos em dias diferentes
 **Data**: 20/01/2026  
@@ -59,7 +60,7 @@ Onde:
 **Parceiro**: Cliente VIP  
 **Valor**: 2.800,00  
 
-**Resultado**: `260120aBB [REC] VENDA SERVICO - CLIENTE VIP - R$ 2.800,00.jpg`  
+**Resultado**: `260120aBB [REC] CONTA PAGA TULA CX - VENDA SERVICO - CLIENTE VIP - R$ 2.800,00.pdf`  
 (Note que volta para 'a' porque é um dia diferente)
 
 ## Lógica de Sequenciamento
