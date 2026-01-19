@@ -437,7 +437,14 @@
       document.querySelectorAll('.tab').forEach(tab => {
         tab.classList.remove('active');
       });
-      event.target.classList.add('active');
+      
+      // Find and activate the clicked tab
+      const tabs = document.querySelectorAll('.tab');
+      if (tabName === 'form') {
+        tabs[0].classList.add('active');
+      } else if (tabName === 'history') {
+        tabs[1].classList.add('active');
+      }
       
       // Update tab content
       document.querySelectorAll('.tab-content').forEach(content => {
@@ -493,8 +500,8 @@
     // Format value input
     document.getElementById('value').addEventListener('input', function(e) {
       let value = e.target.value;
-      // Remove non-numeric characters except comma and period
-      value = value.replace(/[^\d,\.]/g, '');
+      // Remove non-numeric characters except comma (Brazilian format)
+      value = value.replace(/[^\d,]/g, '');
       e.target.value = value;
     });
     

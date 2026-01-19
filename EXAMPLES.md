@@ -49,7 +49,7 @@ Onde:
 **Parceiro**: Papelaria Central  
 **Valor**: 380,50  
 
-**Resultado**: `260119cAB [GTO] COMPRA MATERIAL ESCRITORIO - PAPELARIA CENTRAL - R$ 380,50.jpg`
+**Resultado**: `260119cAB [GTO] COMPRA MATERIAL ESCRITÓRIO - PAPELARIA CENTRAL - R$ 380,50.jpg`
 
 ### Cenário 4: Lançamentos em dias diferentes
 **Data**: 20/01/2026  
