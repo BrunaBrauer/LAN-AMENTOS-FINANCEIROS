@@ -581,8 +581,20 @@
     // Remove a specific photo
     function removePhoto(index) {
       photosData.splice(index, 1);
+      
+      // Rebuild all preview elements with correct indices
       const container = document.getElementById('photoPreviewContainer');
-      container.children[index].remove();
+      container.innerHTML = '';
+      
+      photosData.forEach((photoData, idx) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'photo-preview-item';
+        previewItem.innerHTML = `
+          <img src="${photoData}" alt="Preview ${idx + 1}">
+          <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
+        `;
+        container.appendChild(previewItem);
+      });
       
       if (photosData.length === 0) {
         document.getElementById('photoPlaceholder').style.display = 'block';

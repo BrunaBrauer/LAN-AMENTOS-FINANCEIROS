@@ -183,8 +183,9 @@ function formatCurrency(value) {
  * @return {Blob} PDF blob
  */
 function createPdfFromImages(imagesData, filename) {
-  // Create a temporary Google Doc to convert to PDF
-  const doc = DocumentApp.create('Temp_' + filename);
+  // Create a temporary Google Doc with timestamp-based name
+  const tempName = 'Temp_PDF_' + Date.now();
+  const doc = DocumentApp.create(tempName);
   const body = doc.getBody();
   
   // Add each image to the document (one per page)
@@ -209,8 +210,8 @@ function createPdfFromImages(imagesData, filename) {
   const pdfBlob = docFile.getAs('application/pdf');
   pdfBlob.setName(filename);
   
-  // Delete the temporary document
-  docFile.setTrashed(true);
+  // Permanently delete the temporary document
+  DriveApp.removeFile(docFile);
   
   return pdfBlob;
 }
