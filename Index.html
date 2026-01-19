@@ -8,7 +8,6 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Lançamentos">
-  <link rel="manifest" href="manifest.json">
   <title>Lançamentos Financeiros</title>
   
   <!-- jsPDF Library -->
@@ -45,6 +44,7 @@
       flex-direction: column;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      font-size: 16px;
     }
     
     .app-header {
@@ -60,7 +60,7 @@
     }
     
     .app-header h1 {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 600;
       text-align: center;
       margin: 0;
@@ -90,13 +90,14 @@
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background: var(--background);
+      max-width: 100%;
     }
     
     .content-wrapper {
       background: white;
       padding: 20px;
-      max-width: 600px;
-      margin: 0 auto;
+      max-width: 100%;
+      margin: 0;
     }
     
     h1 {
@@ -127,11 +128,11 @@
     
     .tab {
       flex: 1;
-      padding: 16px 12px;
+      padding: 18px 12px;
       background: transparent;
       border: none;
       cursor: pointer;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 600;
       color: var(--text-secondary);
       border-bottom: 3px solid transparent;
@@ -147,7 +148,7 @@
     
     .tab-content {
       display: none;
-      padding: 20px;
+      padding: 24px 16px;
       animation: fadeIn 0.3s ease-in;
     }
     
@@ -161,15 +162,15 @@
     }
     
     .form-group {
-      margin-bottom: 20px;
+      margin-bottom: 24px;
     }
     
     label {
       display: block;
       color: var(--text-color);
       font-weight: 600;
-      margin-bottom: 8px;
-      font-size: 14px;
+      margin-bottom: 10px;
+      font-size: 16px;
     }
     
     input[type="text"],
@@ -177,10 +178,10 @@
     select,
     textarea {
       width: 100%;
-      padding: 12px;
+      padding: 14px;
       border: 2px solid var(--border-color);
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 17px;
       transition: all 0.3s;
       font-family: inherit;
       background: white;
@@ -196,7 +197,7 @@
     
     textarea {
       resize: vertical;
-      min-height: 80px;
+      min-height: 100px;
     }
     
     .radio-group {
@@ -217,7 +218,7 @@
     
     .radio-option label {
       display: block;
-      padding: 12px;
+      padding: 14px;
       border: 2px solid var(--border-color);
       border-radius: 8px;
       text-align: center;
@@ -225,6 +226,7 @@
       transition: all 0.3s;
       margin: 0;
       background: white;
+      font-size: 16px;
     }
     
     .radio-option input[type="radio"]:checked + label {
@@ -264,12 +266,12 @@
     .btn-camera,
     .btn-gallery {
       flex: 1;
-      padding: 10px;
+      padding: 12px;
       border: 2px solid var(--primary-color);
       background: white;
       color: var(--primary-color);
       border-radius: 8px;
-      font-size: 14px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
@@ -354,7 +356,7 @@
     
     .photo-text {
       color: var(--text-secondary);
-      font-size: 14px;
+      font-size: 15px;
     }
     
     #photoInput,
@@ -365,10 +367,10 @@
     
     .btn {
       width: 100%;
-      padding: 15px;
+      padding: 16px;
       border: none;
       border-radius: 8px;
-      font-size: 16px;
+      font-size: 17px;
       font-weight: 600;
       cursor: pointer;
       transition: all 0.3s;
@@ -556,6 +558,7 @@
       text-decoration: none;
       font-weight: 600;
       word-break: break-word;
+      font-size: 15px;
     }
     
     .history-item a:hover {
@@ -564,15 +567,15 @@
     
     .history-date {
       color: #999;
-      font-size: 12px;
+      font-size: 14px;
       margin-top: 5px;
     }
     
     .history-sync-status {
       display: inline-block;
-      padding: 2px 8px;
+      padding: 3px 10px;
       border-radius: 4px;
-      font-size: 11px;
+      font-size: 13px;
       margin-left: 8px;
       background: #ffc107;
       color: #856404;
@@ -587,6 +590,7 @@
       text-align: center;
       padding: 40px;
       color: #999;
+      font-size: 15px;
     }
     
     @media (max-width: 480px) {
@@ -595,11 +599,26 @@
       }
       
       .tab-content {
-        padding: 15px;
+        padding: 20px 12px;
       }
       
       .app-header h1 {
-        font-size: 18px;
+        font-size: 20px;
+      }
+      
+      .app-header {
+        padding: 14px 16px;
+      }
+      
+      label {
+        font-size: 15px;
+      }
+      
+      input[type="text"],
+      input[type="date"],
+      select,
+      textarea {
+        font-size: 16px;
       }
     }
   </style>
@@ -754,13 +773,35 @@
     // LocalStorage functions
     function saveToLocalStorage(transaction) {
       const transactions = getLocalTransactions();
-      transaction.id = Date.now();
-      transaction.synced = false;
-      transaction.timestamp = new Date().toISOString();
-      transactions.push(transaction);
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      
+      // Create a lightweight copy without the PDF data (to avoid quota issues)
+      const lightTransaction = {
+        id: Date.now(),
+        date: transaction.date,
+        partner: transaction.partner,
+        description: transaction.description,
+        type: transaction.type,
+        status: transaction.status,
+        account: transaction.account,
+        user: transaction.user,
+        value: transaction.value,
+        synced: false,
+        timestamp: new Date().toISOString()
+      };
+      
+      transactions.push(lightTransaction);
+      
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
+      } catch (e) {
+        console.error('localStorage error:', e);
+        // If still fails, keep only last 10 transactions
+        const recentTransactions = transactions.slice(-10);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(recentTransactions));
+      }
+      
       updateSyncBadge();
-      return transaction.id; // Return the ID so it can be used later
+      return lightTransaction.id; // Return the ID so it can be used later
     }
     
     function getLocalTransactions() {
