@@ -12,7 +12,7 @@ function doGet() {
 
 /**
  * Processes the form submission and saves the file to Drive
- * @param {Object} formData - Form data including image, date, partner, description, type, user
+ * @param {Object} formData - Form data including image, date, partner, description, type, user, value
  * @return {Object} Result object with success status and message
  */
 function processForm(formData) {
@@ -20,16 +20,18 @@ function processForm(formData) {
     // Get the folder
     const folder = DriveApp.getFolderById(FOLDER_ID);
     
-    // Parse form data
-    const date = new Date(formData.date);
+    // Parse form data - fix date parsing to avoid timezone issues
+    const dateParts = formData.date.split('-'); // YYYY-MM-DD
+    const date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
     const partner = formData.partner;
     const description = formData.description;
     const type = formData.type;
     const userInitials = formData.user;
+    const value = formData.value;
     const imageData = formData.image;
     
     // Generate filename with sequential logic
-    const filename = generateFileName(folder, date, userInitials, partner, description);
+    const filename = generateFileName(folder, date, userInitials, partner, description, type, value);
     
     // Process image data (remove data URL prefix)
     const base64Data = imageData.split(',')[1];
@@ -57,15 +59,17 @@ function processForm(formData) {
 }
 
 /**
- * Generates filename with sequential logic: AAMMDD[seq][Iniciais] - Parceiro - Desc.jpg
+ * Generates filename with sequential logic: AAMMDD[seq][Iniciais] [TYPE] DESCRIPTION - PARTNER - R$ VALUE.jpg
  * @param {Folder} folder - Drive folder
  * @param {Date} date - Transaction date
  * @param {string} initials - User initials
  * @param {string} partner - Partner name
  * @param {string} description - Transaction description
+ * @param {string} type - Transaction type (Receita or Gasto)
+ * @param {string} value - Transaction value
  * @return {string} Generated filename
  */
-function generateFileName(folder, date, initials, partner, description) {
+function generateFileName(folder, date, initials, partner, description, type, value) {
   // Format date as AAMMDD (year month day in 2 digits each)
   const year = String(date.getFullYear()).slice(-2);
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -98,12 +102,22 @@ function generateFileName(folder, date, initials, partner, description) {
     seqLetter = firstLetter + secondLetter;
   }
   
-  // Sanitize partner and description (remove special characters)
-  const sanitizedPartner = sanitizeFileName(partner);
-  const sanitizedDesc = sanitizeFileName(description);
+  // Type prefix: [GTO] for Gasto, [REC] for Receita
+  const typePrefix = type === 'Gasto' ? '[GTO]' : '[REC]';
   
-  // Build filename: AAMMDD[seq][Iniciais] - Parceiro - Desc.jpg
-  const filename = `${datePrefix}${seqLetter}${initials} - ${sanitizedPartner} - ${sanitizedDesc}.jpg`;
+  // Sanitize and uppercase partner and description
+  const sanitizedPartner = sanitizeFileName(partner).toUpperCase();
+  const sanitizedDesc = sanitizeFileName(description).toUpperCase();
+  
+  // Format value
+  const formattedValue = value ? `R$ ${value}` : '';
+  
+  // Build filename: AAMMDD[seq][Iniciais] [TYPE] DESCRIPTION - PARTNER - R$ VALUE.jpg
+  let filename = `${datePrefix}${seqLetter}${initials} ${typePrefix} ${sanitizedDesc} - ${sanitizedPartner}`;
+  if (formattedValue) {
+    filename += ` - ${formattedValue}`;
+  }
+  filename += '.jpg';
   
   return filename;
 }
@@ -132,6 +146,43 @@ function formatDate(date) {
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
   return `${day}/${month}/${year}`;
+}
+
+/**
+ * Gets list of files from Drive folder for history display
+ * @param {number} limit - Maximum number of files to return
+ * @return {Array} Array of file objects with name, url, date
+ */
+function getFileHistory(limit = 50) {
+  try {
+    const folder = DriveApp.getFolderById(FOLDER_ID);
+    const files = folder.getFiles();
+    const fileList = [];
+    
+    while (files.hasNext() && fileList.length < limit) {
+      const file = files.next();
+      fileList.push({
+        name: file.getName(),
+        url: file.getUrl(),
+        date: file.getDateCreated(),
+        size: file.getSize()
+      });
+    }
+    
+    // Sort by date, most recent first
+    fileList.sort((a, b) => b.date - a.date);
+    
+    return {
+      success: true,
+      files: fileList
+    };
+  } catch (error) {
+    Logger.log('Error in getFileHistory: ' + error.toString());
+    return {
+      success: false,
+      message: 'Erro ao carregar histórico: ' + error.toString()
+    };
+  }
 }
 
 /**

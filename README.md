@@ -4,17 +4,21 @@ App mobile para lançamento de movimentações financeiras com captura de fotos 
 
 ## 📋 Funcionalidades
 
-- **Interface Mobile Responsiva**: Design otimizado para dispositivos móveis
+- **Interface Mobile Responsiva**: Design otimizado para dispositivos móveis com tabs
 - **Campos do Formulário**:
   - Data da movimentação
   - Parceiro (fornecedor/cliente)
   - Descrição detalhada
   - Tipo: Receita ou Gasto
-  - Usuário (iniciais, ex: MR)
+  - Usuário (dropdown): Bruna Brauer (BB), Ivan Braga Ramos (BR), Ana Braga (AB)
+  - Valor monetário
   - Foto (câmera ou galeria)
-- **Nomenclatura Automática**: Arquivos salvos com padrão `AAMMDD[seq][Iniciais] - Parceiro - Desc.jpg`
+- **Nomenclatura Automática**: Arquivos salvos com padrão `AAMMDD[seq][Iniciais] [TIPO] DESCRIÇÃO - PARCEIRO - R$ VALOR.jpg`
+- **Tipo no Nome**: [GTO] para Gastos e [REC] para Receitas
+- **Texto em Maiúsculas**: Descrição e parceiro automaticamente convertidos para maiúsculas
 - **Sequenciamento Inteligente**: Gera letras sequenciais (a, b, c...) para múltiplos lançamentos na mesma data
 - **Armazenamento no Drive**: Salvamento automático em pasta configurável
+- **Histórico**: Aba para visualizar todos os arquivos salvos no Drive
 
 ## 🚀 Como Implantar
 
@@ -67,35 +71,33 @@ App mobile para lançamento de movimentações financeiras com captura de fotos 
 
 ## 📱 Como Usar
 
-1. **Preencha os dados**:
+1. **Aba "Novo Lançamento"**:
    - Selecione a data (padrão: hoje)
    - Digite o nome do parceiro
    - Descreva a movimentação
    - Escolha o tipo (Receita ou Gasto)
-   - Informe suas iniciais (ex: MR, AB)
-
-2. **Adicione a foto**:
-   - Toque na área de foto
-   - Escolha tirar nova foto ou selecionar da galeria
-   - A prévia será exibida
-
-3. **Salve**:
+   - Selecione o usuário no dropdown (BB, BR ou AB)
+   - Informe o valor (ex: 1.226,61)
+   - Toque na área de foto para tirar ou selecionar imagem
    - Clique em "Salvar Lançamento"
-   - Aguarde a confirmação
-   - O arquivo será salvo automaticamente no Drive
+
+2. **Aba "Histórico"**:
+   - Visualize todos os arquivos salvos
+   - Clique em qualquer arquivo para abri-lo no Drive
+   - Veja data e hora de criação
 
 ## 📂 Padrão de Nomenclatura
 
 Os arquivos são salvos seguindo o padrão:
 
 ```
-AAMMDD[seq][Iniciais] - Parceiro - Descrição.jpg
+AAMMDD[seq][Iniciais] [TIPO] DESCRIÇÃO - PARCEIRO - R$ VALOR.jpg
 ```
 
 **Exemplo**:
-- Primeiro lançamento do dia 19/01/2026 por MR: `260119aMR - Loja ABC - Compra material.jpg`
-- Segundo lançamento do mesmo dia: `260119bMR - Restaurante - Almoço equipe.jpg`
-- Terceiro lançamento: `260119cMR - Cliente XYZ - Venda produto.jpg`
+- Primeiro lançamento do dia 19/01/2026 por BB: `260119aBB [GTO] CONTA PAGA - KAUESTEEL - R$ 1.226,61.jpg`
+- Segundo lançamento do mesmo dia por BR: `260119bBR [REC] PAGAMENTO CLIENTE - EMPRESA XYZ - R$ 5.500,00.jpg`
+- Terceiro lançamento: `260119cAB [GTO] COMPRA MATERIAL - PAPELARIA - R$ 380,50.jpg`
 
 ### Lógica de Sequenciamento
 

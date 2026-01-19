@@ -43,7 +43,40 @@
       color: #666;
       font-size: 14px;
       text-align: center;
-      margin-bottom: 30px;
+      margin-bottom: 20px;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
     }
     
     .form-group {
@@ -245,6 +278,44 @@
       100% { transform: rotate(360deg); }
     }
     
+    .history-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .history-item {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+      transition: background 0.2s;
+    }
+    
+    .history-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .history-item a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    
+    .history-item a:hover {
+      text-decoration: underline;
+    }
+    
+    .history-date {
+      color: #999;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    
+    .no-history {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    
     @media (max-width: 480px) {
       .container {
         padding: 20px;
@@ -265,67 +336,94 @@
     <h1>💰 Lançamentos Financeiros</h1>
     <p class="subtitle">Registre suas movimentações</p>
     
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('form')">Novo Lançamento</button>
+      <button class="tab" onclick="switchTab('history')">Histórico</button>
+    </div>
+    
     <div id="message" class="message"></div>
     
-    <form id="transactionForm">
-      <div class="form-group">
-        <label for="date">Data</label>
-        <input type="date" id="date" name="date" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="partner">Parceiro</label>
-        <input type="text" id="partner" name="partner" placeholder="Ex: Fornecedor ABC" required>
-      </div>
-      
-      <div class="form-group">
-        <label for="description">Descrição</label>
-        <textarea id="description" name="description" placeholder="Descrição da movimentação" required></textarea>
-      </div>
-      
-      <div class="form-group">
-        <label>Tipo</label>
-        <div class="radio-group">
-          <div class="radio-option">
-            <input type="radio" id="receita" name="type" value="Receita" checked>
-            <label for="receita">💵 Receita</label>
-          </div>
-          <div class="radio-option">
-            <input type="radio" id="gasto" name="type" value="Gasto">
-            <label for="gasto">💸 Gasto</label>
+    <!-- Form Tab -->
+    <div id="formTab" class="tab-content active">
+      <form id="transactionForm">
+        <div class="form-group">
+          <label for="date">Data</label>
+          <input type="date" id="date" name="date" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="partner">Parceiro</label>
+          <input type="text" id="partner" name="partner" placeholder="Ex: Fornecedor ABC" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Descrição</label>
+          <textarea id="description" name="description" placeholder="Descrição da movimentação" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Tipo</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="receita" name="type" value="Receita" checked>
+              <label for="receita">💵 Receita</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="gasto" name="type" value="Gasto">
+              <label for="gasto">💸 Gasto</label>
+            </div>
           </div>
         </div>
-      </div>
-      
-      <div class="form-group">
-        <label for="user">Usuário (Iniciais)</label>
-        <input type="text" id="user" name="user" placeholder="Ex: MR" maxlength="3" style="text-transform: uppercase;" required>
-      </div>
-      
-      <div class="form-group">
-        <label>Foto</label>
-        <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
-          <input type="file" id="photoInput" accept="image/*" capture="environment">
-          <div id="photoPlaceholder">
-            <div class="photo-icon">📷</div>
-            <div class="photo-text">Toque para tirar foto ou selecionar imagem</div>
-          </div>
-          <img id="photoPreview" alt="Preview">
+        
+        <div class="form-group">
+          <label for="user">Usuário</label>
+          <select id="user" name="user" required>
+            <option value="">Selecione o usuário</option>
+            <option value="BB">Bruna Brauer (BB)</option>
+            <option value="BR">Ivan Braga Ramos (BR)</option>
+            <option value="AB">Ana Braga (AB)</option>
+          </select>
         </div>
+        
+        <div class="form-group">
+          <label for="value">Valor</label>
+          <input type="text" id="value" name="value" placeholder="Ex: 1.226,61" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Foto</label>
+          <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
+            <input type="file" id="photoInput" accept="image/*" capture="environment">
+            <div id="photoPlaceholder">
+              <div class="photo-icon">📷</div>
+              <div class="photo-text">Toque para tirar foto ou selecionar imagem</div>
+            </div>
+            <img id="photoPreview" alt="Preview">
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          Salvar Lançamento
+        </button>
+        
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">
+          Limpar Formulário
+        </button>
+      </form>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Salvando lançamento...</p>
       </div>
-      
-      <button type="submit" class="btn btn-primary" id="submitBtn">
-        Salvar Lançamento
-      </button>
-      
-      <button type="button" class="btn btn-secondary" onclick="resetForm()">
-        Limpar Formulário
-      </button>
-    </form>
+    </div>
     
-    <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <p>Salvando lançamento...</p>
+    <!-- History Tab -->
+    <div id="historyTab" class="tab-content">
+      <div class="loading" id="historyLoading">
+        <div class="spinner"></div>
+        <p>Carregando histórico...</p>
+      </div>
+      <div id="historyList" class="history-list"></div>
     </div>
   </div>
   
@@ -333,9 +431,71 @@
     // Set today's date as default
     document.getElementById('date').valueAsDate = new Date();
     
-    // Convert user input to uppercase
-    document.getElementById('user').addEventListener('input', function(e) {
-      e.target.value = e.target.value.toUpperCase();
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      event.target.classList.add('active');
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      if (tabName === 'form') {
+        document.getElementById('formTab').classList.add('active');
+      } else if (tabName === 'history') {
+        document.getElementById('historyTab').classList.add('active');
+        loadHistory();
+      }
+    }
+    
+    // Load history
+    function loadHistory() {
+      document.getElementById('historyLoading').classList.add('show');
+      document.getElementById('historyList').innerHTML = '';
+      
+      google.script.run
+        .withSuccessHandler(displayHistory)
+        .withFailureHandler(historyError)
+        .getFileHistory();
+    }
+    
+    function displayHistory(result) {
+      document.getElementById('historyLoading').classList.remove('show');
+      
+      if (result.success && result.files.length > 0) {
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = result.files.map(file => {
+          const date = new Date(file.date);
+          const dateStr = date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR');
+          return `
+            <div class="history-item">
+              <a href="${file.url}" target="_blank">${file.name}</a>
+              <div class="history-date">${dateStr}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        document.getElementById('historyList').innerHTML = 
+          '<div class="no-history">Nenhum arquivo encontrado</div>';
+      }
+    }
+    
+    function historyError(error) {
+      document.getElementById('historyLoading').classList.remove('show');
+      document.getElementById('historyList').innerHTML = 
+        '<div class="no-history">Erro ao carregar histórico: ' + error.message + '</div>';
+    }
+    
+    // Format value input
+    document.getElementById('value').addEventListener('input', function(e) {
+      let value = e.target.value;
+      // Remove non-numeric characters except comma and period
+      value = value.replace(/[^\d,\.]/g, '');
+      e.target.value = value;
     });
     
     // Handle photo selection
@@ -373,6 +533,7 @@
         description: document.getElementById('description').value,
         type: document.querySelector('input[name="type"]:checked').value,
         user: document.getElementById('user').value,
+        value: document.getElementById('value').value,
         image: photoData
       };
       
