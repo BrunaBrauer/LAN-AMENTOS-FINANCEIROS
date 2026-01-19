@@ -726,8 +726,15 @@
   </div>
   
   <script>
-    // jsPDF initialization
-    const { jsPDF } = window.jspdf;
+    // jsPDF initialization with error handling
+    let jsPDF = null;
+    try {
+      if (window.jspdf) {
+        jsPDF = window.jspdf.jsPDF;
+      }
+    } catch (error) {
+      console.error('jsPDF library failed to load:', error);
+    }
     
     // LocalStorage keys
     const STORAGE_KEY = 'financial_transactions';
@@ -753,6 +760,7 @@
       transactions.push(transaction);
       localStorage.setItem(STORAGE_KEY, JSON.stringify(transactions));
       updateSyncBadge();
+      return transaction.id; // Return the ID so it can be used later
     }
     
     function getLocalTransactions() {
@@ -1062,6 +1070,10 @@
     
     // Convert images to PDF
     async function convertImagesToPDF() {
+      if (!jsPDF) {
+        throw new Error('jsPDF library não está disponível. Verifique sua conexão com a internet.');
+      }
+      
       if (photosData.length === 0) {
         throw new Error('Nenhuma foto para converter');
       }
@@ -1107,8 +1119,16 @@
           const x = (pageWidth - width) / 2;
           const y = (pageHeight - height) / 2;
           
-          // Add image to PDF
-          pdf.addImage(images[i].data, 'JPEG', x, y, width, height, undefined, 'FAST');
+          // Determine image format from MIME type
+          let format = 'JPEG'; // default
+          if (images[i].type === 'image/png') {
+            format = 'PNG';
+          } else if (images[i].type === 'image/jpeg' || images[i].type === 'image/jpg') {
+            format = 'JPEG';
+          }
+          
+          // Add image to PDF with detected format
+          pdf.addImage(images[i].data, format, x, y, width, height, undefined, 'FAST');
         } catch (err) {
           console.error('Error adding image to PDF:', err);
         }
@@ -1166,8 +1186,7 @@
         };
         
         // Save to local storage first and get the transaction ID
-        saveToLocalStorage(formData);
-        const transactionId = formData.id;
+        const transactionId = saveToLocalStorage(formData);
         
         progressBar.style.width = '80%';
         
