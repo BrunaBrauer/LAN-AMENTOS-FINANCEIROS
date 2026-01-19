@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Lançamentos Financeiros</title>
+  
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      padding: 20px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .container {
+      background: white;
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 30px;
+      max-width: 500px;
+      width: 100%;
+    }
+    
+    h1 {
+      color: #333;
+      font-size: 24px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    
+    .subtitle {
+      color: #666;
+      font-size: 14px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #e0e0e0;
+    }
+    
+    .tab {
+      flex: 1;
+      padding: 12px;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 600;
+      color: #666;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+    }
+    
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    
+    .tab-content {
+      display: none;
+    }
+    
+    .tab-content.active {
+      display: block;
+    }
+    
+    .form-group {
+      margin-bottom: 20px;
+    }
+    
+    label {
+      display: block;
+      color: #333;
+      font-weight: 600;
+      margin-bottom: 8px;
+      font-size: 14px;
+    }
+    
+    input[type="text"],
+    input[type="date"],
+    select,
+    textarea {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      font-size: 16px;
+      transition: all 0.3s;
+      font-family: inherit;
+    }
+    
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    textarea {
+      resize: vertical;
+      min-height: 80px;
+    }
+    
+    .radio-group {
+      display: flex;
+      gap: 15px;
+      margin-top: 8px;
+    }
+    
+    .radio-option {
+      flex: 1;
+      position: relative;
+    }
+    
+    .radio-option input[type="radio"] {
+      position: absolute;
+      opacity: 0;
+    }
+    
+    .radio-option label {
+      display: block;
+      padding: 12px;
+      border: 2px solid #e0e0e0;
+      border-radius: 10px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin: 0;
+    }
+    
+    .radio-option input[type="radio"]:checked + label {
+      background: #667eea;
+      color: white;
+      border-color: #667eea;
+    }
+    
+    .photo-section {
+      border: 2px dashed #e0e0e0;
+      border-radius: 10px;
+      padding: 20px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      background: #f9f9f9;
+    }
+    
+    .photo-section:hover {
+      border-color: #667eea;
+      background: #f5f7ff;
+    }
+    
+    .photo-section.has-photo {
+      border-style: solid;
+      border-color: #667eea;
+      padding: 10px;
+    }
+    
+    #photoPreviewContainer {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    
+    .photo-preview-item {
+      position: relative;
+      width: 100px;
+      height: 100px;
+    }
+    
+    .photo-preview-item img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+    
+    .pdf-preview {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 32px;
+      text-align: center;
+      padding: 5px;
+      word-break: break-word;
+      font-size: 10px;
+    }
+    
+    .photo-preview-item .remove-photo {
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      background: #f44336;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 24px;
+      height: 24px;
+      cursor: pointer;
+      font-size: 16px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    
+    .photo-icon {
+      font-size: 48px;
+      color: #667eea;
+      margin-bottom: 10px;
+    }
+    
+    .photo-text {
+      color: #666;
+      font-size: 14px;
+    }
+    
+    #photoInput {
+      display: none;
+    }
+    
+    .btn {
+      width: 100%;
+      padding: 15px;
+      border: none;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      margin-top: 10px;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+    
+    .btn-primary:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    .btn-secondary {
+      background: #f0f0f0;
+      color: #333;
+    }
+    
+    .message {
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      display: none;
+      font-size: 14px;
+    }
+    
+    .message.show {
+      display: block;
+    }
+    
+    .message.success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    
+    .message.error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 20px;
+    }
+    
+    .loading.show {
+      display: block;
+    }
+    
+    .spinner {
+      border: 3px solid #f3f3f3;
+      border-top: 3px solid #667eea;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .history-list {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    
+    .history-item {
+      padding: 15px;
+      border-bottom: 1px solid #e0e0e0;
+      transition: background 0.2s;
+    }
+    
+    .history-item:hover {
+      background: #f5f5f5;
+    }
+    
+    .history-item a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 600;
+      word-break: break-word;
+    }
+    
+    .history-item a:hover {
+      text-decoration: underline;
+    }
+    
+    .history-date {
+      color: #999;
+      font-size: 12px;
+      margin-top: 5px;
+    }
+    
+    .no-history {
+      text-align: center;
+      padding: 40px;
+      color: #999;
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 20px;
+      }
+      
+      h1 {
+        font-size: 20px;
+      }
+      
+      body {
+        padding: 10px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>💰 Lançamentos Financeiros</h1>
+    <p class="subtitle">Registre suas movimentações</p>
+    
+    <div class="tabs">
+      <button class="tab active" onclick="switchTab('form')">Novo Lançamento</button>
+      <button class="tab" onclick="switchTab('history')">Histórico</button>
+    </div>
+    
+    <div id="message" class="message"></div>
+    
+    <!-- Form Tab -->
+    <div id="formTab" class="tab-content active">
+      <form id="transactionForm">
+        <div class="form-group">
+          <label for="date">Data</label>
+          <input type="date" id="date" name="date" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="partner">Parceiro</label>
+          <input type="text" id="partner" name="partner" placeholder="Ex: Fornecedor ABC" required>
+        </div>
+        
+        <div class="form-group">
+          <label for="description">Descrição</label>
+          <textarea id="description" name="description" placeholder="Descrição da movimentação" required></textarea>
+        </div>
+        
+        <div class="form-group">
+          <label>Tipo</label>
+          <div class="radio-group">
+            <div class="radio-option">
+              <input type="radio" id="receita" name="type" value="Receita">
+              <label for="receita">💵 Receita</label>
+            </div>
+            <div class="radio-option">
+              <input type="radio" id="gasto" name="type" value="Gasto" checked>
+              <label for="gasto">💸 Gasto</label>
+            </div>
+          </div>
+        </div>
+        
+        <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status" required>
+            <option value="PAGA" selected>PAGA</option>
+            <option value="A_PAGAR_RECEBER">À PAGAR/RECEBER</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="account">Conta Financeira</label>
+          <select id="account" name="account" required>
+            <option value="CX" selected>CAIXA FISICO (CX)</option>
+            <option value="BB">BANCO DO BRASIL (BB)</option>
+            <option value="CE">CAIXA ECONOMICA (CE)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="user">Usuário</label>
+          <select id="user" name="user" required>
+            <option value="">Selecione o usuário</option>
+            <option value="BB">Bruna Brauer Braga (BB)</option>
+            <option value="BR">Ivan Braga Ramos (BR)</option>
+            <option value="AB">Adriana Tardin Brauer Braga (AB)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="value">Valor</label>
+          <input type="text" id="value" name="value" placeholder="Ex: 1.226,61" required>
+        </div>
+        
+        <div class="form-group">
+          <label>Arquivos (Fotos ou PDFs)</label>
+          <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
+            <input type="file" id="photoInput" accept="image/*,application/pdf" multiple>
+            <div id="photoPlaceholder">
+              <div class="photo-icon">📎</div>
+              <div class="photo-text">Toque para adicionar arquivos (fotos ou PDFs)</div>
+            </div>
+            <div id="photoPreviewContainer"></div>
+          </div>
+        </div>
+        
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          Salvar Lançamento
+        </button>
+        
+        <button type="button" class="btn btn-secondary" onclick="resetForm()">
+          Limpar Formulário
+        </button>
+      </form>
+      
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p>Salvando lançamento...</p>
+      </div>
+    </div>
+    
+    <!-- History Tab -->
+    <div id="historyTab" class="tab-content">
+      <div class="loading" id="historyLoading">
+        <div class="spinner"></div>
+        <p>Carregando histórico...</p>
+      </div>
+      <div id="historyList" class="history-list"></div>
+    </div>
+  </div>
+  
+  <script>
+    // Set today's date as default
+    document.getElementById('date').valueAsDate = new Date();
+    
+    // Tab switching
+    function switchTab(tabName) {
+      // Update tab buttons
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Find and activate the clicked tab
+      const tabs = document.querySelectorAll('.tab');
+      if (tabName === 'form') {
+        tabs[0].classList.add('active');
+      } else if (tabName === 'history') {
+        tabs[1].classList.add('active');
+      }
+      
+      // Update tab content
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+      });
+      
+      if (tabName === 'form') {
+        document.getElementById('formTab').classList.add('active');
+      } else if (tabName === 'history') {
+        document.getElementById('historyTab').classList.add('active');
+        loadHistory();
+      }
+    }
+    
+    // Load history
+    function loadHistory() {
+      document.getElementById('historyLoading').classList.add('show');
+      document.getElementById('historyList').innerHTML = '';
+      
+      google.script.run
+        .withSuccessHandler(displayHistory)
+        .withFailureHandler(historyError)
+        .getFileHistory();
+    }
+    
+    function displayHistory(result) {
+      document.getElementById('historyLoading').classList.remove('show');
+      
+      if (result.success && result.files.length > 0) {
+        const historyList = document.getElementById('historyList');
+        historyList.innerHTML = result.files.map(file => {
+          return `
+            <div class="history-item">
+              <a href="${file.url}" target="_blank">${file.name}</a>
+              <div class="history-date">${file.date} - ${file.type} - ${file.value}</div>
+            </div>
+          `;
+        }).join('');
+      } else {
+        document.getElementById('historyList').innerHTML = 
+          '<div class="no-history">Nenhum arquivo encontrado</div>';
+      }
+    }
+    
+    function historyError(error) {
+      document.getElementById('historyLoading').classList.remove('show');
+      document.getElementById('historyList').innerHTML = 
+        '<div class="no-history">Erro ao carregar histórico: ' + error.message + '</div>';
+    }
+    
+    // Format value input with thousands separator
+    document.getElementById('value').addEventListener('input', function(e) {
+      let value = e.target.value;
+      // Remove all non-numeric characters except comma
+      value = value.replace(/[^\d,]/g, '');
+      
+      // Split by comma to get integer and decimal parts
+      const parts = value.split(',');
+      let integerPart = parts[0];
+      const decimalPart = parts[1];
+      
+      // Remove existing dots
+      integerPart = integerPart.replace(/\./g, '');
+      
+      // Add thousands separator
+      integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+      
+      // Reconstruct value
+      value = decimalPart !== undefined ? integerPart + ',' + decimalPart : integerPart;
+      
+      e.target.value = value;
+    });
+    
+    // Handle multiple file selection (images and PDFs)
+    let photosData = [];
+    let fileTypes = []; // Track file types
+    let loadedPhotos = 0;
+    let totalPhotos = 0;
+    
+    document.getElementById('photoInput').addEventListener('change', function(e) {
+      const files = e.target.files;
+      if (files.length > 0) {
+        // Clear previous files
+        photosData = [];
+        fileTypes = [];
+        loadedPhotos = 0;
+        totalPhotos = files.length;
+        const container = document.getElementById('photoPreviewContainer');
+        container.innerHTML = '';
+        document.getElementById('photoPlaceholder').style.display = 'none';
+        document.getElementById('photoSection').classList.add('has-photo');
+        
+        // Process each file
+        Array.from(files).forEach((file, index) => {
+          const reader = new FileReader();
+          reader.onload = function(event) {
+            photosData[index] = event.target.result;
+            fileTypes[index] = file.type;
+            loadedPhotos++;
+            
+            // Create preview element
+            const previewItem = document.createElement('div');
+            previewItem.className = 'photo-preview-item';
+            
+            // Different preview for PDFs vs images
+            if (file.type === 'application/pdf') {
+              previewItem.innerHTML = `
+                <div class="pdf-preview">📄 ${file.name}</div>
+                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+              `;
+            } else {
+              previewItem.innerHTML = `
+                <img src="${event.target.result}" alt="Preview ${index + 1}">
+                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+              `;
+            }
+            container.appendChild(previewItem);
+            
+            // Update submit button text
+            updateSubmitButton();
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    });
+    
+    function updateSubmitButton() {
+      const btn = document.getElementById('submitBtn');
+      if (loadedPhotos < totalPhotos && totalPhotos > 0) {
+        btn.textContent = `Carregando arquivos (${loadedPhotos}/${totalPhotos})...`;
+        btn.disabled = true;
+      } else {
+        btn.textContent = 'Salvar Lançamento';
+        btn.disabled = false;
+      }
+    }
+    
+    // Remove a specific file
+    function removePhoto(index) {
+      photosData.splice(index, 1);
+      fileTypes.splice(index, 1);
+      
+      // Rebuild all preview elements with correct indices
+      const container = document.getElementById('photoPreviewContainer');
+      container.innerHTML = '';
+      
+      photosData.forEach((photoData, idx) => {
+        const previewItem = document.createElement('div');
+        previewItem.className = 'photo-preview-item';
+        
+        if (fileTypes[idx] === 'application/pdf') {
+          previewItem.innerHTML = `
+            <div class="pdf-preview">📄 PDF</div>
+            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
+          `;
+        } else {
+          previewItem.innerHTML = `
+            <img src="${photoData}" alt="Preview ${idx + 1}">
+            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
+          `;
+        }
+        container.appendChild(previewItem);
+      });
+      
+      if (photosData.length === 0) {
+        document.getElementById('photoPlaceholder').style.display = 'block';
+        document.getElementById('photoSection').classList.remove('has-photo');
+      }
+    }
+    
+    // Handle form submission
+    document.getElementById('transactionForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Filter out any null/undefined files and validate
+      const validFiles = photosData.filter(p => p != null && p !== '');
+      if (validFiles.length === 0) {
+        showMessage('Por favor, adicione pelo menos um arquivo.', 'error');
+        return;
+      }
+      
+      // Get form data
+      const formData = {
+        date: document.getElementById('date').value,
+        partner: document.getElementById('partner').value,
+        description: document.getElementById('description').value,
+        type: document.querySelector('input[name="type"]:checked').value,
+        status: document.getElementById('status').value,
+        account: document.getElementById('account').value,
+        user: document.getElementById('user').value,
+        value: document.getElementById('value').value,
+        images: validFiles
+      };
+      
+      // Show loading
+      document.getElementById('transactionForm').style.display = 'none';
+      document.getElementById('loading').classList.add('show');
+      
+      // Submit to server
+      google.script.run
+        .withSuccessHandler(onSuccess)
+        .withFailureHandler(onFailure)
+        .processForm(formData);
+    });
+    
+    function onSuccess(result) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('transactionForm').style.display = 'block';
+      
+      if (result.success) {
+        showMessage(result.message + ' Arquivo: ' + result.filename, 'success');
+        resetForm();
+      } else {
+        showMessage(result.message, 'error');
+      }
+    }
+    
+    function onFailure(error) {
+      document.getElementById('loading').classList.remove('show');
+      document.getElementById('transactionForm').style.display = 'block';
+      showMessage('Erro ao processar: ' + error.message, 'error');
+    }
+    
+    function showMessage(text, type) {
+      const messageDiv = document.getElementById('message');
+      messageDiv.textContent = text;
+      messageDiv.className = 'message show ' + type;
+      
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          messageDiv.classList.remove('show');
+        }, 5000);
+      }
+    }
+    
+    function resetForm() {
+      document.getElementById('transactionForm').reset();
+      document.getElementById('date').valueAsDate = new Date();
+      photosData = [];
+      loadedPhotos = 0;
+      totalPhotos = 0;
+      document.getElementById('photoPreviewContainer').innerHTML = '';
+      document.getElementById('photoPlaceholder').style.display = 'block';
+      document.getElementById('photoSection').classList.remove('has-photo');
+      document.getElementById('message').classList.remove('show');
+      updateSubmitButton();
+    }
+  </script>
+</body>
+</html>

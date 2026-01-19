@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Preview - Lançamentos Financeiros</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .preview-container {
+      max-width: 800px;
+      margin: 0 auto;
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      border-bottom: 3px solid #667eea;
+      padding-bottom: 10px;
+    }
+    .feature {
+      margin: 20px 0;
+      padding: 15px;
+      background: #f9f9f9;
+      border-left: 4px solid #667eea;
+      border-radius: 5px;
+    }
+    .feature h3 {
+      color: #667eea;
+      margin-top: 0;
+    }
+    .code-block {
+      background: #2d2d2d;
+      color: #f8f8f2;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+    }
+    .example {
+      background: #e8f5e9;
+      padding: 10px;
+      border-radius: 5px;
+      margin: 10px 0;
+      border-left: 4px solid #4caf50;
+    }
+    .mobile-frame {
+      width: 375px;
+      height: 667px;
+      border: 16px solid #333;
+      border-radius: 36px;
+      margin: 20px auto;
+      overflow: hidden;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+    }
+    .mobile-content {
+      width: 100%;
+      height: 100%;
+      overflow-y: auto;
+    }
+    iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .info-box {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 15px;
+      border-radius: 5px;
+      margin: 20px 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="preview-container">
+    <h1>📱 Lançamentos Financeiros - Web App Preview</h1>
+    
+    <div class="info-box">
+      <strong>⚠️ Este é um arquivo de demonstração</strong><br>
+      Para usar o aplicativo real, siga as instruções no <strong>DEPLOY.md</strong>
+    </div>
+    
+    <div class="feature">
+      <h3>✨ Funcionalidades Implementadas</h3>
+      <ul>
+        <li><strong>Interface Mobile Responsiva</strong> - Design otimizado para celulares</li>
+        <li><strong>Campos do Formulário</strong> - Data, Parceiro, Descrição, Tipo (Receita/Gasto), Usuário, Foto</li>
+        <li><strong>Captura de Foto</strong> - Integração com câmera do dispositivo</li>
+        <li><strong>Nomenclatura Inteligente</strong> - Formato AAMMDD[seq][Iniciais] - Parceiro - Desc.jpg</li>
+        <li><strong>Sequenciamento Automático</strong> - Letras sequenciais (a, b, c...) por data</li>
+        <li><strong>Integração com Google Drive</strong> - Salvamento automático em pasta configurável</li>
+      </ul>
+    </div>
+    
+    <div class="feature">
+      <h3>📋 Exemplo de Nomenclatura</h3>
+      <p>Lançamentos do dia 19/01/2026:</p>
+      <div class="example">
+        <strong>1º lançamento:</strong> 260119aMR - Loja ABC - Compra material.jpg
+      </div>
+      <div class="example">
+        <strong>2º lançamento:</strong> 260119bMR - Restaurante - Almoço equipe.jpg
+      </div>
+      <div class="example">
+        <strong>3º lançamento:</strong> 260119cAB - Cliente XYZ - Venda produto.jpg
+      </div>
+    </div>
+    
+    <div class="feature">
+      <h3>🔧 Estrutura de Arquivos</h3>
+      <div class="code-block">
+/LANÇAMENTOS-FINANCEIROS/
+├── Code.gs               # Backend do Google Apps Script
+├── Index.html            # Interface HTML responsiva
+├── appsscript.json       # Configuração do projeto
+├── README.md             # Documentação completa
+├── DEPLOY.md             # Guia de implantação
+├── EXAMPLES.md           # Exemplos de uso
+└── .gitignore            # Arquivos ignorados
+      </div>
+    </div>
+    
+    <div class="feature">
+      <h3>🎯 Lógica de Sequenciamento</h3>
+      <ol>
+        <li>Sistema lê todos os arquivos na pasta do Drive</li>
+        <li>Conta quantos arquivos começam com o prefixo da data (AAMMDD)</li>
+        <li>Gera letra sequencial: 0='a', 1='b', 2='c', etc.</li>
+        <li>Cria o nome do arquivo com formato completo</li>
+        <li>Salva no Drive sem risco de conflitos de nome</li>
+      </ol>
+    </div>
+    
+    <div class="feature">
+      <h3>🚀 Próximos Passos</h3>
+      <ol>
+        <li>Abra o <strong>DEPLOY.md</strong> para instruções detalhadas</li>
+        <li>Crie um projeto no Google Apps Script</li>
+        <li>Configure o ID da pasta do Google Drive</li>
+        <li>Implante como Web App</li>
+        <li>Acesse pelo celular e adicione à tela inicial</li>
+      </ol>
+    </div>
+    
+    <div class="feature">
+      <h3>📱 Simulação de Interface Mobile</h3>
+      <p style="text-align: center; color: #666;">
+        <em>A interface real é totalmente funcional quando implantada no Google Apps Script.<br>
+        Este preview mostra apenas a estrutura HTML sem a integração com o backend.</em>
+      </p>
+      
+      <div class="mobile-frame">
+        <div class="mobile-content">
+          <iframe src="Index.html"></iframe>
+        </div>
+      </div>
+    </div>
+    
+    <div class="info-box">
+      <strong>📞 Suporte</strong><br>
+      Para problemas ou dúvidas, consulte:
+      <ul style="margin-top: 10px;">
+        <li><strong>README.md</strong> - Visão geral e recursos</li>
+        <li><strong>DEPLOY.md</strong> - Guia de implantação passo a passo</li>
+        <li><strong>EXAMPLES.md</strong> - Exemplos de nomenclatura</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
