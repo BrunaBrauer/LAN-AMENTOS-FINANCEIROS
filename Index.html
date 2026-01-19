@@ -6,8 +6,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#667eea">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
   <meta name="apple-mobile-web-app-title" content="Lançamentos">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Lançamentos Financeiros</title>
   
   <!-- jsPDF Library -->
@@ -15,15 +16,16 @@
   
   <style>
     :root {
-      --primary-color: #667eea;
-      --primary-dark: #5568d3;
-      --secondary-color: #764ba2;
-      --success-color: #4caf50;
-      --error-color: #f44336;
-      --text-color: #333;
-      --text-secondary: #666;
-      --border-color: #e0e0e0;
-      --background: #f5f5f5;
+      --primary-color: #5e72e4;
+      --primary-dark: #4c63d2;
+      --secondary-color: #8965e0;
+      --success-color: #2dce89;
+      --error-color: #f5365c;
+      --text-color: #32325d;
+      --text-secondary: #8898aa;
+      --border-color: #dee2e6;
+      --background: #f7fafc;
+      --card-shadow: 0 1px 3px rgba(50, 50, 93, 0.15), 0 1px 0 rgba(0, 0, 0, 0.02);
     }
     
     * {
@@ -52,11 +54,11 @@
       top: 0;
       left: 0;
       right: 0;
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      background: linear-gradient(87deg, var(--primary-color) 0, var(--secondary-color) 100%);
       color: white;
-      padding: 16px 20px;
+      padding: 18px 20px;
       z-index: 100;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
     
     .app-header h1 {
@@ -86,7 +88,7 @@
     
     .container {
       flex: 1;
-      margin-top: 52px;
+      margin-top: 56px;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
       background: var(--background);
@@ -148,8 +150,9 @@
     
     .tab-content {
       display: none;
-      padding: 24px 16px;
+      padding: 20px 16px;
       animation: fadeIn 0.3s ease-in;
+      background: white;
     }
     
     @keyframes fadeIn {
@@ -178,13 +181,14 @@
     select,
     textarea {
       width: 100%;
-      padding: 14px;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
+      padding: 14px 16px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       font-size: 17px;
-      transition: all 0.3s;
+      transition: all 0.15s ease;
       font-family: inherit;
       background: white;
+      color: var(--text-color);
     }
     
     input:focus,
@@ -192,7 +196,7 @@
     textarea:focus {
       outline: none;
       border-color: var(--primary-color);
-      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+      box-shadow: 0 0 0 3px rgba(94, 114, 228, 0.1);
     }
     
     textarea {
@@ -219,11 +223,11 @@
     .radio-option label {
       display: block;
       padding: 14px;
-      border: 2px solid var(--border-color);
-      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
       text-align: center;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.15s ease;
       margin: 0;
       background: white;
       font-size: 16px;
@@ -233,7 +237,7 @@
       background: var(--primary-color);
       color: white;
       border-color: var(--primary-color);
-      transform: scale(1.02);
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
     
     .photo-section {
@@ -369,25 +373,25 @@
       width: 100%;
       padding: 16px;
       border: none;
-      border-radius: 8px;
+      border-radius: 6px;
       font-size: 17px;
       font-weight: 600;
       cursor: pointer;
-      transition: all 0.3s;
+      transition: all 0.15s ease;
       margin-top: 10px;
       position: relative;
       overflow: hidden;
     }
     
     .btn-primary {
-      background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+      background: linear-gradient(87deg, var(--primary-color) 0, var(--secondary-color) 100%);
       color: white;
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+      box-shadow: 0 4px 6px rgba(50, 50, 93, 0.11), 0 1px 3px rgba(0, 0, 0, 0.08);
     }
     
     .btn-primary:hover:not(:disabled) {
-      transform: translateY(-2px);
-      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      transform: translateY(-1px);
+      box-shadow: 0 7px 14px rgba(50, 50, 93, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
     }
     
     .btn-primary:active:not(:disabled) {
@@ -656,6 +660,21 @@
         </div>
         
         <div class="form-group">
+          <label for="user">Usuário</label>
+          <select id="user" name="user" required>
+            <option value="">Selecione o usuário</option>
+            <option value="BB">Bruna Brauer Braga (BB)</option>
+            <option value="BR">Ivan Braga Ramos (BR)</option>
+            <option value="AB">Adriana Tardin Brauer Braga (AB)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="value">Valor</label>
+          <input type="text" id="value" name="value" placeholder="Ex: 1.226,61" required>
+        </div>
+        
+        <div class="form-group">
           <label>Tipo</label>
           <div class="radio-group">
             <div class="radio-option">
@@ -684,21 +703,6 @@
             <option value="BB">BANCO DO BRASIL (BB)</option>
             <option value="CE">CAIXA ECONOMICA (CE)</option>
           </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="user">Usuário</label>
-          <select id="user" name="user" required>
-            <option value="">Selecione o usuário</option>
-            <option value="BB">Bruna Brauer Braga (BB)</option>
-            <option value="BR">Ivan Braga Ramos (BR)</option>
-            <option value="AB">Adriana Tardin Brauer Braga (AB)</option>
-          </select>
-        </div>
-        
-        <div class="form-group">
-          <label for="value">Valor</label>
-          <input type="text" id="value" name="value" placeholder="Ex: 1.226,61" required>
         </div>
         
         <div class="form-group">
@@ -1143,22 +1147,31 @@
           const pageWidth = pdf.internal.pageSize.getWidth();
           const pageHeight = pdf.internal.pageSize.getHeight();
           
-          // Calculate scaling to fit page with margins
-          const margin = 10;
+          // Calculate scaling to fit page with margins, maintaining aspect ratio
+          const margin = 15;
           const maxWidth = pageWidth - (2 * margin);
           const maxHeight = pageHeight - (2 * margin);
           
-          let width = img.width;
-          let height = img.height;
+          // Calculate aspect ratios
+          const imgAspectRatio = img.width / img.height;
+          const pageAspectRatio = maxWidth / maxHeight;
           
-          // Scale down if needed
-          const ratio = Math.min(maxWidth / width, maxHeight / height, 1);
-          width = width * ratio;
-          height = height * ratio;
+          let pdfWidth, pdfHeight;
+          
+          // Fit image to page while maintaining aspect ratio
+          if (imgAspectRatio > pageAspectRatio) {
+            // Image is wider - fit to width
+            pdfWidth = maxWidth;
+            pdfHeight = maxWidth / imgAspectRatio;
+          } else {
+            // Image is taller - fit to height
+            pdfHeight = maxHeight;
+            pdfWidth = maxHeight * imgAspectRatio;
+          }
           
           // Center on page
-          const x = (pageWidth - width) / 2;
-          const y = (pageHeight - height) / 2;
+          const x = (pageWidth - pdfWidth) / 2;
+          const y = (pageHeight - pdfHeight) / 2;
           
           // Determine image format from MIME type
           let format = 'JPEG'; // default
@@ -1168,8 +1181,8 @@
             format = 'JPEG';
           }
           
-          // Add image to PDF with detected format
-          pdf.addImage(images[i].data, format, x, y, width, height, undefined, 'FAST');
+          // Add image to PDF with detected format and proper dimensions
+          pdf.addImage(images[i].data, format, x, y, pdfWidth, pdfHeight, undefined, 'FAST');
         } catch (err) {
           console.error('Error adding image to PDF:', err);
         }
