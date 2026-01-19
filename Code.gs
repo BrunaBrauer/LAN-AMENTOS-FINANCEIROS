@@ -13,7 +13,7 @@ function doGet() {
 
 /**
  * Processes the form submission and saves the file to Drive
- * @param {Object} formData - Form data including images, date, partner, description, type, user, value
+ * @param {Object} formData - Form data including images, date, partner, description, type, user, value, status, account
  * @return {Object} Result object with success status and message
  */
 function processForm(formData) {
@@ -27,35 +27,43 @@ function processForm(formData) {
     const partner = formData.partner;
     const description = formData.description;
     const type = formData.type;
+    const status = formData.status;
+    const account = formData.account;
     const userInitials = formData.user;
     const value = formData.value;
-    const imagesData = formData.images; // Array of images
+    const imagesData = formData.images; // Array of images/files
     
     // Generate base filename with sequential logic
-    const baseFilename = generateFileName(folder, date, userInitials, partner, description, type, value);
+    const baseFilename = generateFileName(folder, date, userInitials, partner, description, type, value, status, account);
     
-    // Save each image as a separate file
+    // Save each file
     const savedFiles = [];
     for (let i = 0; i < imagesData.length; i++) {
-      // Add page number to filename for multiple images
+      // Add page number to filename for multiple files
       let filename = baseFilename;
       if (imagesData.length > 1) {
-        // Remove .pdf extension and add page number
-        filename = baseFilename.replace('.pdf', ` - Pag${i + 1}.jpg`);
+        // Extract extension from base64 data
+        const dataType = imagesData[i].split(';')[0].split(':')[1];
+        const ext = dataType === 'application/pdf' ? '.pdf' : '.jpg';
+        // Remove extension and add page number
+        filename = baseFilename.replace(/\.(jpg|pdf)$/, ` - Pag${i + 1}${ext}`);
       } else {
-        // Single image, just change extension to .jpg
-        filename = baseFilename.replace('.pdf', '.jpg');
+        // Single file, determine extension
+        const dataType = imagesData[i].split(';')[0].split(':')[1];
+        const ext = dataType === 'application/pdf' ? '.pdf' : '.jpg';
+        filename = baseFilename.replace(/\.(jpg|pdf)$/, ext);
       }
       
-      // Process image data (remove data URL prefix)
+      // Process file data (remove data URL prefix)
       const base64Data = imagesData[i].split(',')[1];
-      const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), 'image/jpeg', filename);
+      const mimeType = imagesData[i].split(';')[0].split(':')[1];
+      const blob = Utilities.newBlob(Utilities.base64Decode(base64Data), mimeType, filename);
       
       // Save file to Drive
       const file = folder.createFile(blob);
       
       // Set file description with transaction details
-      file.setDescription(`Tipo: ${type}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}\nValor: R$ ${value}\nPágina: ${i + 1} de ${imagesData.length}`);
+      file.setDescription(`Tipo: ${type}\nStatus: ${status}\nConta: ${account}\nParceiro: ${partner}\nDescrição: ${description}\nData: ${formatDate(date)}\nUsuário: ${userInitials}\nValor: R$ ${value}\nArquivo: ${i + 1} de ${imagesData.length}`);
       
       savedFiles.push({
         name: filename,
@@ -68,7 +76,7 @@ function processForm(formData) {
     
     return {
       success: true,
-      message: `Lançamento salvo com sucesso! ${savedFiles.length} imagem(ns) salva(s).`,
+      message: `Lançamento salvo com sucesso! ${savedFiles.length} arquivo(s) salvo(s).`,
       filename: savedFiles.map(f => f.name).join(', '),
       fileId: savedFiles[0].url
     };
@@ -82,7 +90,7 @@ function processForm(formData) {
 }
 
 /**
- * Generates filename with sequential logic: AAMMDD[seq][Iniciais] [TYPE] CONTA PAGA TULA CX - DESCRIPTION - PARTNER - R$ VALUE.pdf
+ * Generates filename with sequential logic: AAMMDD[seq][Iniciais] [TYPE] CONTA [STATUS] TULA [ACCOUNT] - DESCRIPTION - PARTNER - R$ VALUE
  * @param {Folder} folder - Drive folder
  * @param {Date} date - Transaction date
  * @param {string} initials - User initials
@@ -90,9 +98,11 @@ function processForm(formData) {
  * @param {string} description - Transaction description
  * @param {string} type - Transaction type (Receita or Gasto)
  * @param {string} value - Transaction value
+ * @param {string} status - Payment status (PAGA or A_PAGAR_RECEBER)
+ * @param {string} account - Financial account (BB, CE, CX)
  * @return {string} Generated filename
  */
-function generateFileName(folder, date, initials, partner, description, type, value) {
+function generateFileName(folder, date, initials, partner, description, type, value, status, account) {
   // Format date as AAMMDD (year month day in 2 digits each)
   const year = String(date.getFullYear()).slice(-2);
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -128,6 +138,19 @@ function generateFileName(folder, date, initials, partner, description, type, va
   // Type prefix: [GTO] for Gasto, [REC] for Receita
   const typePrefix = type === 'Gasto' ? '[GTO]' : '[REC]';
   
+  // Status text: determines PAGA/PAGAR/RECEBER
+  let statusText;
+  if (status === 'PAGA') {
+    statusText = 'PAGA';
+  } else {
+    // A_PAGAR_RECEBER
+    if (type === 'Gasto') {
+      statusText = 'PAGAR';
+    } else {
+      statusText = 'RECEBER';
+    }
+  }
+  
   // Sanitize and uppercase partner and description
   const sanitizedPartner = sanitizeFileName(partner).toUpperCase();
   const sanitizedDesc = sanitizeFileName(description).toUpperCase();
@@ -135,12 +158,12 @@ function generateFileName(folder, date, initials, partner, description, type, va
   // Format value with thousands separator (1.000,00)
   const formattedValue = formatCurrency(value);
   
-  // Build filename: AAMMDD[seq][Iniciais] [TYPE] CONTA PAGA TULA CX - DESCRIPTION - PARTNER - R$ VALUE.pdf
-  let filename = `${datePrefix}${seqLetter}${initials} ${typePrefix} CONTA PAGA TULA CX - ${sanitizedDesc} - ${sanitizedPartner}`;
+  // Build filename: AAMMDD[seq][Iniciais] [TYPE] CONTA [STATUS] TULA [ACCOUNT] - DESCRIPTION - PARTNER - R$ VALUE
+  let filename = `${datePrefix}${seqLetter}${initials} ${typePrefix} CONTA ${statusText} TULA ${account} - ${sanitizedDesc} - ${sanitizedPartner}`;
   if (formattedValue) {
     filename += ` - ${formattedValue}`;
   }
-  filename += '.pdf';
+  filename += '.jpg'; // Default extension, will be changed in processForm based on file type
   
   return filename;
 }

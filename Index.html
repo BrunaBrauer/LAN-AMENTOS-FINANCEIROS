@@ -191,6 +191,22 @@
       border-radius: 8px;
     }
     
+    .pdf-preview {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f0f0;
+      border: 2px solid #667eea;
+      border-radius: 8px;
+      font-size: 32px;
+      text-align: center;
+      padding: 5px;
+      word-break: break-word;
+      font-size: 10px;
+    }
+    
     .photo-preview-item .remove-photo {
       position: absolute;
       top: -8px;
@@ -392,23 +408,40 @@
           <label>Tipo</label>
           <div class="radio-group">
             <div class="radio-option">
-              <input type="radio" id="receita" name="type" value="Receita" checked>
+              <input type="radio" id="receita" name="type" value="Receita">
               <label for="receita">💵 Receita</label>
             </div>
             <div class="radio-option">
-              <input type="radio" id="gasto" name="type" value="Gasto">
+              <input type="radio" id="gasto" name="type" value="Gasto" checked>
               <label for="gasto">💸 Gasto</label>
             </div>
           </div>
         </div>
         
         <div class="form-group">
+          <label for="status">Status</label>
+          <select id="status" name="status" required>
+            <option value="PAGA" selected>PAGA</option>
+            <option value="A_PAGAR_RECEBER">À PAGAR/RECEBER</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
+          <label for="account">Conta Financeira</label>
+          <select id="account" name="account" required>
+            <option value="CX" selected>CAIXA FISICO (CX)</option>
+            <option value="BB">BANCO DO BRASIL (BB)</option>
+            <option value="CE">CAIXA ECONOMICA (CE)</option>
+          </select>
+        </div>
+        
+        <div class="form-group">
           <label for="user">Usuário</label>
           <select id="user" name="user" required>
             <option value="">Selecione o usuário</option>
-            <option value="BB">Bruna Brauer (BB)</option>
+            <option value="BB">Bruna Brauer Braga (BB)</option>
             <option value="BR">Ivan Braga Ramos (BR)</option>
-            <option value="AB">Ana Braga (AB)</option>
+            <option value="AB">Adriana Tardin Brauer Braga (AB)</option>
           </select>
         </div>
         
@@ -418,12 +451,12 @@
         </div>
         
         <div class="form-group">
-          <label>Fotos</label>
+          <label>Arquivos (Fotos ou PDFs)</label>
           <div class="photo-section" id="photoSection" onclick="document.getElementById('photoInput').click()">
-            <input type="file" id="photoInput" accept="image/*" capture="environment" multiple>
+            <input type="file" id="photoInput" accept="image/*,application/pdf" multiple>
             <div id="photoPlaceholder">
-              <div class="photo-icon">📷</div>
-              <div class="photo-text">Toque para adicionar fotos (múltiplas)</div>
+              <div class="photo-icon">📎</div>
+              <div class="photo-text">Toque para adicionar arquivos (fotos ou PDFs)</div>
             </div>
             <div id="photoPreviewContainer"></div>
           </div>
@@ -545,16 +578,18 @@
       e.target.value = value;
     });
     
-    // Handle multiple photo selection
+    // Handle multiple file selection (images and PDFs)
     let photosData = [];
+    let fileTypes = []; // Track file types
     let loadedPhotos = 0;
     let totalPhotos = 0;
     
     document.getElementById('photoInput').addEventListener('change', function(e) {
       const files = e.target.files;
       if (files.length > 0) {
-        // Clear previous photos
+        // Clear previous files
         photosData = [];
+        fileTypes = [];
         loadedPhotos = 0;
         totalPhotos = files.length;
         const container = document.getElementById('photoPreviewContainer');
@@ -567,15 +602,25 @@
           const reader = new FileReader();
           reader.onload = function(event) {
             photosData[index] = event.target.result;
+            fileTypes[index] = file.type;
             loadedPhotos++;
             
             // Create preview element
             const previewItem = document.createElement('div');
             previewItem.className = 'photo-preview-item';
-            previewItem.innerHTML = `
-              <img src="${event.target.result}" alt="Preview ${index + 1}">
-              <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
-            `;
+            
+            // Different preview for PDFs vs images
+            if (file.type === 'application/pdf') {
+              previewItem.innerHTML = `
+                <div class="pdf-preview">📄 ${file.name}</div>
+                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+              `;
+            } else {
+              previewItem.innerHTML = `
+                <img src="${event.target.result}" alt="Preview ${index + 1}">
+                <button type="button" class="remove-photo" onclick="removePhoto(${index})">×</button>
+              `;
+            }
             container.appendChild(previewItem);
             
             // Update submit button text
@@ -589,7 +634,7 @@
     function updateSubmitButton() {
       const btn = document.getElementById('submitBtn');
       if (loadedPhotos < totalPhotos && totalPhotos > 0) {
-        btn.textContent = `Carregando fotos (${loadedPhotos}/${totalPhotos})...`;
+        btn.textContent = `Carregando arquivos (${loadedPhotos}/${totalPhotos})...`;
         btn.disabled = true;
       } else {
         btn.textContent = 'Salvar Lançamento';
@@ -597,9 +642,10 @@
       }
     }
     
-    // Remove a specific photo
+    // Remove a specific file
     function removePhoto(index) {
       photosData.splice(index, 1);
+      fileTypes.splice(index, 1);
       
       // Rebuild all preview elements with correct indices
       const container = document.getElementById('photoPreviewContainer');
@@ -608,10 +654,18 @@
       photosData.forEach((photoData, idx) => {
         const previewItem = document.createElement('div');
         previewItem.className = 'photo-preview-item';
-        previewItem.innerHTML = `
-          <img src="${photoData}" alt="Preview ${idx + 1}">
-          <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
-        `;
+        
+        if (fileTypes[idx] === 'application/pdf') {
+          previewItem.innerHTML = `
+            <div class="pdf-preview">📄 PDF</div>
+            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
+          `;
+        } else {
+          previewItem.innerHTML = `
+            <img src="${photoData}" alt="Preview ${idx + 1}">
+            <button type="button" class="remove-photo" onclick="removePhoto(${idx})">×</button>
+          `;
+        }
         container.appendChild(previewItem);
       });
       
@@ -625,10 +679,10 @@
     document.getElementById('transactionForm').addEventListener('submit', function(e) {
       e.preventDefault();
       
-      // Filter out any null/undefined photos and validate
-      const validPhotos = photosData.filter(p => p != null && p !== '');
-      if (validPhotos.length === 0) {
-        showMessage('Por favor, adicione pelo menos uma foto.', 'error');
+      // Filter out any null/undefined files and validate
+      const validFiles = photosData.filter(p => p != null && p !== '');
+      if (validFiles.length === 0) {
+        showMessage('Por favor, adicione pelo menos um arquivo.', 'error');
         return;
       }
       
@@ -638,9 +692,11 @@
         partner: document.getElementById('partner').value,
         description: document.getElementById('description').value,
         type: document.querySelector('input[name="type"]:checked').value,
+        status: document.getElementById('status').value,
+        account: document.getElementById('account').value,
         user: document.getElementById('user').value,
         value: document.getElementById('value').value,
-        images: validPhotos
+        images: validFiles
       };
       
       // Show loading
