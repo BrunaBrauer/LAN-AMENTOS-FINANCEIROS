@@ -6,7 +6,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#5e72e4">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Lançamentos">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="format-detection" content="telephone=no">
@@ -1138,50 +1138,70 @@
         throw new Error('Nenhuma imagem para converter em PDF');
       }
       
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      let pdf = null;
       
       for (let i = 0; i < images.length; i++) {
-        if (i > 0) {
-          pdf.addPage();
-        }
-        
         try {
           // Get image dimensions
           const img = await loadImage(images[i].data);
           
-          // PDF page dimensions in mm (A4)
-          const pageWidth = 210; // A4 width in mm
-          const pageHeight = 297; // A4 height in mm
-          const margin = 20; // Larger margins
-          
-          // Available space for image
-          const availableWidth = pageWidth - (2 * margin);
-          const availableHeight = pageHeight - (2 * margin);
-          
           // Calculate image aspect ratio
           const imageAspectRatio = img.width / img.height;
-          const availableAspectRatio = availableWidth / availableHeight;
           
-          let finalWidth, finalHeight;
+          // Small margin (5mm on each side = 10mm total)
+          const margin = 5;
           
-          // CRITICAL: Maintain aspect ratio by fitting to the limiting dimension
-          if (imageAspectRatio > availableAspectRatio) {
-            // Image is relatively wider than available space - constrain by width
-            finalWidth = availableWidth;
-            finalHeight = availableWidth / imageAspectRatio;
+          // Determine page orientation based on image
+          let orientation, pageWidth, pageHeight;
+          
+          if (imageAspectRatio > 1) {
+            // Landscape image - create landscape page
+            orientation = 'landscape';
+            // Use image proportions to create custom page size
+            // Base width on A4 landscape width (297mm) and calculate height from aspect ratio
+            pageWidth = 297;
+            pageHeight = pageWidth / imageAspectRatio;
+            
+            // Ensure minimum height of 100mm, maximum of 210mm (A4 short side)
+            if (pageHeight < 100) pageHeight = 100;
+            if (pageHeight > 210) {
+              pageHeight = 210;
+              pageWidth = pageHeight * imageAspectRatio;
+            }
           } else {
-            // Image is relatively taller than available space - constrain by height
-            finalHeight = availableHeight;
-            finalWidth = availableHeight * imageAspectRatio;
+            // Portrait image - create portrait page
+            orientation = 'portrait';
+            // Use image proportions to create custom page size
+            // Base height on A4 portrait height (297mm) and calculate width from aspect ratio
+            pageHeight = 297;
+            pageWidth = pageHeight * imageAspectRatio;
+            
+            // Ensure minimum width of 100mm, maximum of 210mm (A4 width)
+            if (pageWidth < 100) pageWidth = 100;
+            if (pageWidth > 210) {
+              pageWidth = 210;
+              pageHeight = pageWidth / imageAspectRatio;
+            }
           }
           
-          // Center the image on the page
-          const xPosition = (pageWidth - finalWidth) / 2;
-          const yPosition = (pageHeight - finalHeight) / 2;
+          // Create PDF with first image or add page for subsequent images
+          if (i === 0) {
+            pdf = new jsPDF({
+              orientation: orientation,
+              unit: 'mm',
+              format: [pageWidth, pageHeight]
+            });
+          } else {
+            pdf.addPage([pageWidth, pageHeight], orientation);
+          }
+          
+          // Calculate image dimensions with small margins
+          const imgWidth = pageWidth - (2 * margin);
+          const imgHeight = pageHeight - (2 * margin);
+          
+          // Position image with margins
+          const xPosition = margin;
+          const yPosition = margin;
           
           // Determine image format
           let format = 'JPEG';
@@ -1191,10 +1211,10 @@
             format = 'JPEG';
           }
           
-          console.log(`Image ${i+1}: ${img.width}x${img.height}, Ratio: ${imageAspectRatio.toFixed(2)}, PDF: ${finalWidth.toFixed(1)}x${finalHeight.toFixed(1)}mm`);
+          console.log(`Image ${i+1}: ${img.width}x${img.height}, Ratio: ${imageAspectRatio.toFixed(2)}, PDF Page: ${pageWidth.toFixed(1)}x${pageHeight.toFixed(1)}mm (${orientation}), Image: ${imgWidth.toFixed(1)}x${imgHeight.toFixed(1)}mm`);
           
-          // Add image to PDF with calculated dimensions
-          pdf.addImage(images[i].data, format, xPosition, yPosition, finalWidth, finalHeight, undefined, 'FAST');
+          // Add image to PDF filling the page with small margins
+          pdf.addImage(images[i].data, format, xPosition, yPosition, imgWidth, imgHeight, undefined, 'FAST');
         } catch (err) {
           console.error('Error adding image to PDF:', err);
         }
