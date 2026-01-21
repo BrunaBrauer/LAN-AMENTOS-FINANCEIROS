@@ -1195,13 +1195,27 @@
             pdf.addPage([pageWidth, pageHeight], orientation);
           }
           
-          // Calculate image dimensions with small margins
-          const imgWidth = pageWidth - (2 * margin);
-          const imgHeight = pageHeight - (2 * margin);
+          // Calculate available space with margins
+          const availableWidth = pageWidth - (2 * margin);
+          const availableHeight = pageHeight - (2 * margin);
           
-          // Position image with margins
-          const xPosition = margin;
-          const yPosition = margin;
+          // Calculate image dimensions maintaining aspect ratio
+          let imgWidth, imgHeight;
+          const availableAspectRatio = availableWidth / availableHeight;
+          
+          if (imageAspectRatio > availableAspectRatio) {
+            // Image is wider relative to available space - fit to width
+            imgWidth = availableWidth;
+            imgHeight = imgWidth / imageAspectRatio;
+          } else {
+            // Image is taller relative to available space - fit to height
+            imgHeight = availableHeight;
+            imgWidth = imgHeight * imageAspectRatio;
+          }
+          
+          // Center image on page
+          const xPosition = (pageWidth - imgWidth) / 2;
+          const yPosition = (pageHeight - imgHeight) / 2;
           
           // Determine image format
           let format = 'JPEG';
@@ -1211,9 +1225,9 @@
             format = 'JPEG';
           }
           
-          console.log(`Image ${i+1}: ${img.width}x${img.height}, Ratio: ${imageAspectRatio.toFixed(2)}, PDF Page: ${pageWidth.toFixed(1)}x${pageHeight.toFixed(1)}mm (${orientation}), Image: ${imgWidth.toFixed(1)}x${imgHeight.toFixed(1)}mm`);
+          console.log(`Image ${i+1}: ${img.width}x${img.height}, Ratio: ${imageAspectRatio.toFixed(2)}, PDF Page: ${pageWidth.toFixed(1)}x${pageHeight.toFixed(1)}mm (${orientation}), Image: ${imgWidth.toFixed(1)}x${imgHeight.toFixed(1)}mm, Pos: (${xPosition.toFixed(1)}, ${yPosition.toFixed(1)})`);
           
-          // Add image to PDF filling the page with small margins
+          // Add image to PDF with aspect ratio preserved
           pdf.addImage(images[i].data, format, xPosition, yPosition, imgWidth, imgHeight, undefined, 'FAST');
         } catch (err) {
           console.error('Error adding image to PDF:', err);
