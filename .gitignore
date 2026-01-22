@@ -17,3 +17,6 @@ Thumbs.db
 /tmp/
 *.tmp
 *.log
+
+# Test files
+test_pdf.html
