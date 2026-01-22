@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <base target="_top">
+    <meta charset="UTF-8">
+    <meta name="viewport"
+        content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="theme-color" content="#3b82f6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Lançamentos">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icons/icon-192.png">
+    <link rel="icon" href="icons/icon-192.png">
+    <title>Lançamentos Financeiros</title>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+    <style>
+        :root {
+            --primary-color: #3b82f6;
+            --primary-dark: #2563eb;
+            --secondary-color: #8b5cf6;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --text-color: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --background: #f9fafb;
+            --card-background: #ffffff;
+            --safe-area-top: env(safe-area-inset-top, 0px);
+            --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: -apple-system, sans-serif;
+            background: var(--background);
+            color: var(--text-color);
+        }
+
+        body {
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--safe-area-top);
+            padding-bottom: var(--safe-area-bottom);
+        }
+
+        .app-header {
+            background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+            color: white;
+            padding: 1rem;
+            text-align: center;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .tabs {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 1rem;
+            border: none;
+            background: none;
+            font-weight: 600;
+            color: var(--text-secondary);
+            cursor: pointer;
+        }
+
+        .tab.active {
+            color: var(--primary-color);
+            border-bottom: 3px solid var(--primary-color);
+        }
+
+        .tab-content {
+            display: none;
+            padding-top: 1rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .form-group {
+            margin-bottom: 1.25rem;
+            background: white;
+            padding: 1rem;
+            border-radius: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 0.75rem;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            font-size: 16px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--primary-color);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .radio-option {
+            flex: 1;
+            position: relative;
+        }
+
+        .radio-option input {
+            position: absolute;
+            opacity: 0;
+        }
+
+        .radio-option label {
+            display: block;
+            padding: 10px;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            text-align: center;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .radio-option input:checked+label {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+        }
+
+        .photo-section {
+            border: 2px dashed var(--border-color);
+            padding: 1rem;
+            border-radius: 10px;
+            text-align: center;
+        }
+
+        .photo-controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1rem;
+        }
+
+        .photo-controls button {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            border: 2px solid var(--primary-color);
+            background: white;
+            color: var(--primary-color);
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        #photoPreviewContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 10px;
+        }
+
+        .photo-preview-item {
+            position: relative;
+            width: 70px;
+            height: 70px;
+        }
+
+        .photo-preview-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .remove-photo {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--error-color);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .btn-submit {
+            width: 100%;
+            padding: 1rem;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.5);
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .toast {
+            position: fixed;
+            bottom: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 1rem 2rem;
+            border-radius: 30px;
+            color: white;
+            font-weight: 600;
+            z-index: 1000;
+            transition: all 0.3s;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .toast.show {
+            bottom: 30px;
+        }
+
+        .toast-success {
+            background: var(--success-color);
+        }
+
+        .toast-error {
+            background: var(--error-color);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="app-header">
+        <h1>💰 Lançamentos Financeiros</h1>
+    </div>
+
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('form')">Novo</button>
+        <button class="tab" onclick="switchTab('history')">Histórico</button>
+    </div>
+
+    <div class="container">
+        <div id="formTab" class="tab-content active">
+            <form id="transactionForm">
+                <div class="form-group"><label>Data</label><input type="date" id="date" required></div>
+                <div class="form-group"><label>Parceiro</label><input type="text" id="partner"
+                        placeholder="Ex: Fornecedor ABC" required></div>
+                <div class="form-group"><label>Descrição</label><textarea id="description"
+                        placeholder="O que foi comprado/recebido?" required></textarea></div>
+
+                <div class="form-group">
+                    <label>Usuário</label>
+                    <select id="user" required>
+                        <option value="">Selecione</option>
+                        <option value="BB">Bruna Brauer Braga (BB)</option>
+                        <option value="BR">Ivan Braga Ramos (BR)</option>
+                        <option value="AB" selected>Adriana Tardin Brauer Braga (AB)</option>
+                    </select>
+                </div>
+
+                <div class="form-group"><label>Valor (R$)</label><input type="text" id="value" placeholder="1.226,61"
+                        required></div>
+
+                <div class="form-group">
+                    <label>Tipo</label>
+                    <div class="radio-group">
+                        <div class="radio-option"><input type="radio" id="receita" name="type" value="Receita"><label
+                                for="receita">💵 Receita</label></div>
+                        <div class="radio-option"><input type="radio" id="gasto" name="type" value="Gasto"
+                                checked><label for="gasto">💸 Gasto</label></div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="status">Status</label>
+                    <select id="status" required>
+                        <option value="PAGA" selected>PAGA</option>
+                        <option value="A_PAGAR_RECEBER">À PAGAR/RECEBER</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="account">Conta Financeira</label>
+                    <select id="account" required>
+                        <option value="CX" selected>CAIXA FISICO (CX)</option>
+                        <option value="BB">BANCO DO BRASIL (BB)</option>
+                        <option value="CE">CAIXA ECONOMICA (CE)</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Fotos (Serão unidas em um PDF)</label>
+                    <div class="photo-section">
+                        <div class="photo-controls">
+                            <button type="button" onclick="document.getElementById('cameraInput').click()">📷
+                                Câmera</button>
+                            <button type="button" onclick="document.getElementById('galleryInput').click()">🖼️
+                                Galeria</button>
+                        </div>
+                        <input type="file" id="cameraInput" accept="image/*" capture="environment" style="display:none">
+                        <input type="file" id="galleryInput" accept="image/*" multiple style="display:none">
+                        <div id="photoPreviewContainer"></div>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    <span id="btnText">Salvar Lançamento</span>
+                    <div class="progress-bar" id="progressBar"></div>
+                </button>
+            </form>
+        </div>
+
+        <div id="historyTab" class="tab-content">
+            <div id="historyList">Carregando histórico...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'https://script.google.com/macros/s/AKfycbz5-NCz9fwzlzhAbvj6QAdj00t-fXZFU0ht7HHbLqz6i21RABoSXyQsdC0Qih37m9GNzA/exec';
+        let photosData = [];
+        const jsPDFLib = window.jspdf ? window.jspdf.jsPDF : null;
+
+        async function apiCall(action, data = {}) {
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'text/plain' },
+                    body: JSON.stringify({ action: action, ...data }),
+                    mode: 'cors'
+                });
+                if (!response.ok) throw new Error('Erro na comunicação com o servidor');
+                return await response.json();
+            } catch (e) {
+                console.error(e);
+                throw e;
+            }
+        }
+
+        function switchTab(tab) {
+            document.querySelectorAll('.tab, .tab-content').forEach(el => el.classList.remove('active'));
+            event.target.classList.add('active');
+            document.getElementById(tab + 'Tab').classList.add('active');
+            if (tab === 'history') loadHistory();
+        }
+
+        function showToast(msg, type) {
+            const t = document.createElement('div');
+            t.className = `toast show toast-${type}`;
+            t.innerText = msg;
+            document.body.appendChild(t);
+            setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 300); }, 3500);
+        }
+
+        // Processamento de Imagens
+        document.getElementById('cameraInput').onchange = e => handleFiles(e.target.files);
+        document.getElementById('galleryInput').onchange = e => handleFiles(e.target.files);
+
+        function handleFiles(files) {
+            Array.from(files).forEach(file => {
+                const reader = new FileReader();
+                reader.onload = ev => { photosData.push(ev.target.result); renderPreviews(); };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderPreviews() {
+            const container = document.getElementById('photoPreviewContainer');
+            container.innerHTML = photosData.map((src, i) => `
+        <div class="photo-preview-item">
+          <img src="${src}">
+          <button type="button" class="remove-photo" onclick="photosData.splice(${i},1);renderPreviews()">×</button>
+        </div>`).join('');
+            document.getElementById('btnText').innerText = photosData.length > 0 ? `Salvar (${photosData.length} foto/s)` : 'Salvar Lançamento';
+        }
+
+        async function generatePDF() {
+            if (!jsPDFLib || photosData.length === 0) return null;
+
+            const pdf = new jsPDFLib({
+                unit: 'px',
+                hotfixes: ['px_scaling']
+            });
+
+            pdf.deletePage(1);
+
+            for (let i = 0; i < photosData.length; i++) {
+                // 1. Criamos um elemento de imagem temporário para "limpar" a orientação
+                const img = await new Promise((resolve) => {
+                    const tempImg = new Image();
+                    tempImg.onload = () => resolve(tempImg);
+                    tempImg.src = photosData[i];
+                });
+
+                // 2. Usamos um Canvas para redesenhar a imagem na orientação correta
+                const canvas = document.createElement('canvas');
+                canvas.width = img.naturalWidth;
+                canvas.height = img.naturalHeight;
+                const ctx = canvas.getContext('2d');
+
+                // --- INÍCIO DO EFEITO DE SCANNER ---
+                // Aplicamos os filtros: 
+                // grayscale(1) -> Remove cores e manchas coloridas
+                // contrast(1.5) -> Deixa o texto mais preto e o fundo mais branco
+                // brightness(1.1) -> Ajuda a remover sombras cinzas do papel
+                ctx.filter = 'grayscale(1) contrast(1.5) brightness(1.1)';
+                // --- FIM DO EFEITO DE SCANNER ---
+
+                ctx.drawImage(img, 0, 0);
+
+                // 3. Pegamos a nova imagem (já rotacionada e filtrada)
+                // Usamos qualidade 0.8 para manter o PDF leve
+                const normalizedImgData = canvas.toDataURL('image/jpeg', 0.8);
+                const imgProps = pdf.getImageProperties(normalizedImgData);
+
+                // 4. Determinamos a orientação da página com base na imagem normalizada
+                const orientation = imgProps.width > imgProps.height ? 'l' : 'p';
+
+                // 5. Adicionamos a página e a imagem
+                pdf.addPage([imgProps.width, imgProps.height], orientation);
+                pdf.addImage(normalizedImgData, 'JPEG', 0, 0, imgProps.width, imgProps.height, undefined, 'FAST');
+            }
+
+            return pdf.output('dataurlstring');
+        }
+
+
+        // Envio do Formulário
+        document.getElementById('transactionForm').onsubmit = async e => {
+            e.preventDefault();
+            if (photosData.length === 0) return showToast('Por favor, adicione uma foto.', 'error');
+
+            const bar = document.getElementById('progressBar');
+            const btn = document.getElementById('submitBtn');
+            btn.disabled = true;
+            bar.style.width = '20%';
+
+            try {
+                const pdfString = await generatePDF();
+                bar.style.width = '50%';
+
+                const payload = {
+                    formData: {
+                        date: document.getElementById('date').value,
+                        partner: document.getElementById('partner').value,
+                        description: document.getElementById('description').value,
+                        user: document.getElementById('user').value,
+                        value: document.getElementById('value').value,
+                        type: document.querySelector('input[name="type"]:checked').value,
+                        status: document.getElementById('status').value, // NOVO
+                        account: document.getElementById('account').value, // NOVO
+                        pdfData: pdfString
+                    }
+                };
+
+                const res = await apiCall('saveTransaction', payload);
+                bar.style.width = '100%';
+
+                if (res.success) {
+                    showToast('Lançamento salvo com sucesso!', 'success');
+                    e.target.reset();
+                    photosData = [];
+                    renderPreviews();
+                    document.getElementById('date').valueAsDate = new Date();
+                } else {
+                    throw new Error(res.message);
+                }
+            } catch (err) {
+                showToast('Erro: ' + err.message, 'error');
+            } finally {
+                btn.disabled = false;
+                setTimeout(() => bar.style.width = '0%', 1000);
+            }
+        };
+
+        async function loadHistory() {
+            const list = document.getElementById('historyList');
+            list.innerHTML = 'Carregando...';
+            try {
+                const res = await apiCall('getHistory');
+                if (res.success && res.files.length > 0) {
+                    list.innerHTML = res.files.map(item => `
+            <div style="background:white; padding:12px; border-radius:8px; margin-bottom:10px; box-shadow:0 1px 2px rgba(0,0,0,0.05);">
+              <div style="font-weight:bold; color:var(--primary-color);">${item.date} - ${item.partner}</div>
+              <div style="font-size:0.85rem; color:var(--text-secondary); margin:4px 0;">${item.description}</div>
+              <div style="display:flex; justify-content:space-between; font-size:0.9rem; font-weight:600;">
+                <span>${item.value}</span>
+                <a href="${item.url}" target="_blank" style="color:var(--secondary-color); text-decoration:none;">📄 Ver PDF</a>
+              </div>
+            </div>`).join('');
+                } else {
+                    list.innerHTML = 'Nenhum lançamento encontrado.';
+                }
+            } catch { list.innerText = 'Erro ao carregar histórico.'; }
+        }
+
+        // Inicialização
+        document.getElementById('date').valueAsDate = new Date();
+    </script>
+</body>
+
+</html>
